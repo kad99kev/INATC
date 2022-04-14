@@ -1,16 +1,48 @@
 import os
 import neat
+import random
 import visualise
+import pandas as pd
 from sklearn.metrics import classification_report
-from inatc.toy_experiments.utils import read_fake_data, read_yaml
+from inatc.toy_experiments.utils import read_fake_data, read_yaml, parse_arguments
 
-# Create fake dataset.
-cfg = read_yaml("run_config/dataset.yaml")
-split_size, random_state = cfg["info"].values()
-X_train, X_test, y_train, y_test = read_fake_data(
-    split_size, random_state, **cfg["generate"]
-)
-print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+
+def prepare_data():
+    """
+    Parse arguments and prepare experiment data folders.
+    """
+    args = parse_arguments()
+
+    global X_train, X_test, y_train, y_test, run_name, n_generations
+
+    # Create experiment directories based on the type of experiment.
+    run_name = "runs/" + args.run_name + "/"
+    if os.path.isdir(run_name):
+        raise FileExistsError(
+            "A previous run state already exists! Please rename the previous run or delete the folder."
+        )
+    else:
+        os.mkdir(run_name)
+
+    # Get config file based on type of experiment.
+    data_file = f"configs/{args.config}"
+
+    os.mkdir(run_name + "run_checkpoints")
+    os.mkdir(run_name + "run_images")
+
+    # Create fake dataset.
+    cfg = read_yaml(data_file)
+    split_size, random_state = cfg["info"].values()
+    X_train, X_test, y_train, y_test = read_fake_data(
+        split_size, random_state, **cfg["dataset"]
+    )
+
+    # Set seed.
+    random.seed(random_state)
+
+    # Number of generations.
+    n_generations = cfg["generations"]
+
 
 # Most of the code has been taken from the XOR example in their documentation.
 # Source: https://github.com/CodeReclaimers/neat-python/blob/master/examples/xor/evolve-feedforward.py
@@ -43,50 +75,56 @@ def run(config_file):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(100, filename_prefix="run_checkpoints/checkpoint"))
+    p.add_reporter(
+        neat.Checkpointer(100, filename_prefix=run_name + "run_checkpoints/checkpoint")
+    )
 
     # Run for up to 300 generations.
-    winner = p.run(eval_genomes, 300)
+    winner = p.run(eval_genomes, n_generations)
 
     # Display the winning genome.
     print("\nBest genome:\n{!s}".format(winner))
 
     # Evaluate on training data.
     print("*" * 50)
-    print("Training Data")
+    print("Running training evaluation...")
     train_preds = []
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_train:
         pred = winner_net.activate(xi)
         train_preds.append(1 if pred[0] > 0.5 else 0)
-    print(classification_report(y_train, train_preds))
-    print("*" * 50)
+    report = classification_report(y_train, train_preds, output_dict=True)
+    df = pd.DataFrame(report).transpose()
+    df.to_csv(run_name + "train_results.csv")
+    print("Done!")
 
-    # Evaluate on training data.
-    print("Testing Data")
+    # Evaluate on testing data.
+    print("Running testing evaluation...")
     test_preds = []
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_test:
         pred = winner_net.activate(xi)
         test_preds.append(1 if pred[0] > 0.5 else 0)
-    print(classification_report(y_test, test_preds))
-    print("*" * 50)
+    report = classification_report(y_test, test_preds, output_dict=True)
+    df.to_csv(run_name + "test_results.csv")
+    print("Done!")
 
     visualise.draw_net(
         config,
         winner,
-        "run_images/",
+        run_name + "run_images/",
         True,
         filename="toy-run",
     )
-    visualise.plot_stats(stats, "run_images/", ylog=False, view=True)
-    visualise.plot_species(stats, "run_images/", view=True)
+    visualise.plot_stats(stats, run_name + "run_images/", ylog=False, view=True)
+    visualise.plot_species(stats, run_name + "run_images/", view=True)
 
 
 if __name__ == "__main__":
     # Determine path to configuration file. This path manipulation is
     # here so that the script will run successfully regardless of the
     # current working directory.
+    prepare_data()
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "run_config/config-feedforward")
+    config_path = os.path.join(local_dir, "configs/config-feedforward")
     run(config_path)

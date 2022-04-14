@@ -1,6 +1,21 @@
+import argparse
 import yaml
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification
+
+
+def parse_arguments():
+    """
+    Creates an argument parser for balanced and unbalanced experiments.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c", "--config", help="Name of the dataset config file.", type=str
+    )
+    parser.add_argument(
+        "-n", "--run_name", help="The name of the current run.", type=str
+    )
+    return parser.parse_args()
 
 
 def read_yaml(filename):
