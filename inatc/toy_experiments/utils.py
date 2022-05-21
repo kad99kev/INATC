@@ -38,7 +38,7 @@ def read_fake_data(split_size, random_state, **kwargs):
         split_size: Training and testing split size.
         random_state: Random state seed for the dataset.
     """
-    X, y = make_classification(**kwargs)
+    X, y = make_classification(random_state=random_state, **kwargs)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=split_size, random_state=random_state
     )

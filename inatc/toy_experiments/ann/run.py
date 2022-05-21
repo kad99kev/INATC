@@ -1,12 +1,16 @@
 import os
 import random
-from model import SimpleModel
-from inatc.toy_experiments.utils import read_fake_data, read_yaml, parse_arguments
+import pandas as pd
+from sklearn.metrics import classification_report
 
+import pytorch_lightning as pl
 from pytorch_lightning import LightningModule, Trainer
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
+
+from model import SimpleModel
+from inatc.toy_experiments.utils import read_fake_data, read_yaml, parse_arguments
 
 
 def prepare_data():
@@ -27,9 +31,6 @@ def prepare_data():
     # Get config file based on type of experiment.
     data_file = f"configs/{args.config}"
 
-    os.mkdir(run_name + "run_checkpoints")
-    os.mkdir(run_name + "run_images")
-
     # Create fake dataset.
     cfg = read_yaml(data_file)
     split_size, random_state = cfg["info"].values()
@@ -38,6 +39,7 @@ def prepare_data():
     )
 
     # Set seed.
+    pl.seed_everything(random_state)
     random.seed(random_state)
 
     return (
@@ -68,9 +70,9 @@ def run(training_info, model_info, dataset, run_name):
         shuffle=training_info["shuffle"],
         num_workers=training_info["num_workers"],
     )
-    test_ds = TensorDataset(torch.Tensor(X_test), torch.Tensor(y_test))
-    test_dl = DataLoader(
-        test_ds,
+    valid_ds = TensorDataset(torch.Tensor(X_test), torch.Tensor(y_test))
+    valid_dl = DataLoader(
+        valid_ds,
         batch_size=training_info["batch_size"],
         num_workers=training_info["num_workers"],
     )
@@ -79,10 +81,44 @@ def run(training_info, model_info, dataset, run_name):
     model = SimpleModel(model_info[0], model_info[1])
 
     # Initialise trainer.
-    trainer = Trainer(max_epochs=training_info["epochs"], log_every_n_steps=10)
+    trainer = Trainer(
+        max_epochs=training_info["epochs"],
+        default_root_dir=run_name,
+        log_every_n_steps=len(X_train) / training_info["batch_size"],
+        check_val_every_n_epoch=1,
+    )
 
     # Train model.
-    trainer.fit(model, train_dl, test_dl)
+    trainer.fit(model, train_dl, valid_dl)
+
+    # Evaluate on training data.
+    print("*" * 50)
+    print("Running training evaluation...")
+    train_dl = DataLoader(
+        train_ds,
+        batch_size=len(X_train),
+        num_workers=training_info["num_workers"],
+    )
+    train_preds = trainer.predict(dataloaders=train_dl, ckpt_path="best")
+    train_preds = (train_preds[0].reshape(-1) > 0.5).int()
+    report = classification_report(y_train, train_preds, output_dict=True)
+    df = pd.DataFrame(report).transpose()
+    df.to_csv(run_name + "train_results.csv")
+    print("Done!")
+
+    # Evaluate on testing data.
+    print("Running testing evaluation...")
+    test_dl = DataLoader(
+        valid_ds,
+        batch_size=len(X_test),
+        num_workers=training_info["num_workers"],
+    )
+    test_preds = trainer.predict(dataloaders=test_dl, ckpt_path="best")
+    test_preds = (test_preds[0].reshape(-1) > 0.5).int()
+    report = classification_report(y_test, test_preds, output_dict=True)
+    df = pd.DataFrame(report).transpose()
+    df.to_csv(run_name + "test_results.csv")
+    print("Done!")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+import torchmetrics
 
 
 class SimpleModel(pl.LightningModule):
@@ -14,6 +14,8 @@ class SimpleModel(pl.LightningModule):
             nn.Sigmoid(),
         )
         self.loss_fn = nn.BCELoss()
+        self.train_acc = torchmetrics.Accuracy()
+        self.valid_acc = torchmetrics.Accuracy()
 
     def forward(self, inputs):
         x = self.block(inputs)
@@ -27,8 +29,9 @@ class SimpleModel(pl.LightningModule):
         x, y = batch
         y_hat = self(x)
         loss = self.loss_fn(y_hat, y.view(-1, 1))
+        self.train_acc(y_hat.reshape(-1), y.type("torch.IntTensor"))
         self.log(
-            "train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True
+            "train_acc", self.train_acc, prog_bar=True, on_epoch=True, on_step=False
         )
         return loss
 
@@ -36,13 +39,9 @@ class SimpleModel(pl.LightningModule):
         x, y = batch
         y_hat = self(x)
         val_loss = self.loss_fn(y_hat, y.view(-1, 1))
-        self.log("val_loss", val_loss)
-
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self(x)
-        test_loss = self.loss_fn(y_hat, y.view(-1, 1))
-        self.log("test_loss", test_loss)
+        self.valid_acc(y_hat.reshape(-1), y.type("torch.IntTensor"))
+        self.log("valid_acc", self.valid_acc, prog_bar=True, on_epoch=True)
+        return val_loss
 
     def predict_step(self, batch, batch_idx):
         x, y = batch

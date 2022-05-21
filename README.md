@@ -11,4 +11,4 @@ To run an experiment:
 
 3. Change the directory into the experiment you want to perform - ```cd <experiment_name>/<experiment_method>```
 
-4. Execute the experiment - ```python run.py --type <type_name>```
+4. Execute the experiment - ```python run.py```. Use ```python run.py -h``` to access the options.

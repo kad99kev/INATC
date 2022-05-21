@@ -106,6 +106,7 @@ def run(config_file):
         pred = winner_net.activate(xi)
         test_preds.append(1 if pred[0] > 0.5 else 0)
     report = classification_report(y_test, test_preds, output_dict=True)
+    df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "test_results.csv")
     print("Done!")
 

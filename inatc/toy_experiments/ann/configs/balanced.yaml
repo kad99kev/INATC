@@ -6,7 +6,7 @@ dataset:
     n_features: 5
     n_classes: 2
 training:
-    epochs: 3
+    epochs: 2
     batch_size: 64
     shuffle: True
     num_workers: 8
