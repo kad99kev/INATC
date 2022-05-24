@@ -1,9 +1,12 @@
 import os
 import neat
+import time
 import random
+import logging
 import visualise
 import pandas as pd
-from sklearn.metrics import classification_report
+import numpy as np
+from sklearn.metrics import classification_report, f1_score
 from inatc.toy_experiments.utils import read_fake_data, read_yaml, parse_arguments
 
 
@@ -53,12 +56,26 @@ def eval_genomes(genomes, config):
     for genome_id, genome in genomes:
         genome.fitness = 0.0
         net = neat.nn.FeedForwardNetwork.create(genome, config)
+        outputs = []
         for xi, xo in zip(X_train, y_train):
             output = net.activate(xi)
-            genome.fitness -= (output[0] - xo) ** 2
+            outputs.append(np.argmax(output))
+        genome.fitness = f1_score(y_train, outputs, average="weighted")
 
 
 def run(config_file):
+    # Create logger.
+    start_time = time.time()
+    logging.basicConfig(
+        filename=run_name + "run.log",
+        filemode="a",
+        format="%(asctime)s.%(msecs)d: %(levelname)s - %(message)s",
+        datefmt="%H:%M:%S",
+        level=logging.INFO,
+    )
+
+    logging.info("Starting training.")
+
     # Load configuration.
     config = neat.Config(
         neat.DefaultGenome,
@@ -82,12 +99,18 @@ def run(config_file):
     # Run for up to 300 generations.
     winner = p.run(eval_genomes, n_generations)
 
+    # Finish training.
+    logging.info(f"Training done! Time taken - {time.time() - start_time:.3f} seconds")
+
     # Display the winning genome.
     print("\nBest genome:\n{!s}".format(winner))
 
+    # Start evaluation.
+    logging.info("Starting evaluation.")
+    start_time = time.time()
+
     # Evaluate on training data.
-    print("*" * 50)
-    print("Running training evaluation...")
+    logging.info("Running training evaluation...")
     train_preds = []
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_train:
@@ -96,10 +119,9 @@ def run(config_file):
     report = classification_report(y_train, train_preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "train_results.csv")
-    print("Done!")
 
     # Evaluate on testing data.
-    print("Running testing evaluation...")
+    logging.info("Running testing evaluation...")
     test_preds = []
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_test:
@@ -108,17 +130,20 @@ def run(config_file):
     report = classification_report(y_test, test_preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "test_results.csv")
-    print("Done!")
+
+    # Finish evaluation.
+    logging.info(
+        f"Evaluation done! Time taken - {time.time() - start_time:.3f} seconds"
+    )
 
     visualise.draw_net(
         config,
         winner,
         run_name + "run_images/",
-        True,
         filename="toy-run",
     )
-    visualise.plot_stats(stats, run_name + "run_images/", ylog=False, view=True)
-    visualise.plot_species(stats, run_name + "run_images/", view=True)
+    visualise.plot_stats(stats, run_name + "run_images/", ylog=False)
+    visualise.plot_species(stats, run_name + "run_images/")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,8 @@
 import os
 import random
+import time
+import logging
+from numpy import dtype
 import pandas as pd
 from sklearn.metrics import classification_report
 
@@ -61,16 +64,29 @@ def run(training_info, model_info, dataset, run_name):
         run_name: The name of the current run. Will be used for checkpointing.
     """
 
+    # Create logger.
+    start_time = time.time()
+    logging.basicConfig(
+        filename=run_name + "run.log",
+        filemode="a",
+        format="%(asctime)s.%(msecs)d: %(levelname)s - %(message)s",
+        datefmt="%H:%M:%S",
+        level=logging.INFO,
+    )
+
+    logging.info("Starting training.")
+
     # Create dataloaders.
     X_train, X_test, y_train, y_test = dataset
-    train_ds = TensorDataset(torch.Tensor(X_train), torch.Tensor(y_train))
+    print(y_train.shape)
+    train_ds = TensorDataset(torch.Tensor(X_train), torch.LongTensor(y_train))
     train_dl = DataLoader(
         train_ds,
         batch_size=training_info["batch_size"],
         shuffle=training_info["shuffle"],
         num_workers=training_info["num_workers"],
     )
-    valid_ds = TensorDataset(torch.Tensor(X_test), torch.Tensor(y_test))
+    valid_ds = TensorDataset(torch.Tensor(X_test), torch.LongTensor(y_test))
     valid_dl = DataLoader(
         valid_ds,
         batch_size=training_info["batch_size"],
@@ -85,40 +101,49 @@ def run(training_info, model_info, dataset, run_name):
         max_epochs=training_info["epochs"],
         default_root_dir=run_name,
         log_every_n_steps=len(X_train) / training_info["batch_size"],
-        check_val_every_n_epoch=1,
+        check_val_every_n_epoch=training_info["valid_epochs"],
     )
 
     # Train model.
     trainer.fit(model, train_dl, valid_dl)
 
+    # Finish training.
+    logging.info(f"Training done! Time taken - {time.time() - start_time:.3f} seconds")
+
+    # Start evaluation.
+    logging.info("Starting evaluation.")
+    start_time = time.time()
+
     # Evaluate on training data.
-    print("*" * 50)
-    print("Running training evaluation...")
+    logging.info("Running training evaluation...")
     train_dl = DataLoader(
         train_ds,
         batch_size=len(X_train),
         num_workers=training_info["num_workers"],
     )
     train_preds = trainer.predict(dataloaders=train_dl, ckpt_path="best")
-    train_preds = (train_preds[0].reshape(-1) > 0.5).int()
+    _, train_preds = torch.max(train_preds[0].data, 1)
     report = classification_report(y_train, train_preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "train_results.csv")
-    print("Done!")
 
     # Evaluate on testing data.
-    print("Running testing evaluation...")
+    logging.info("Running testing evaluation...")
     test_dl = DataLoader(
         valid_ds,
         batch_size=len(X_test),
         num_workers=training_info["num_workers"],
     )
     test_preds = trainer.predict(dataloaders=test_dl, ckpt_path="best")
-    test_preds = (test_preds[0].reshape(-1) > 0.5).int()
+    _, test_preds = torch.max(test_preds[0].data, 1)
     report = classification_report(y_test, test_preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "test_results.csv")
-    print("Done!")
+
+    # Finish evaluation.
+    logging.info(
+        f"Evaluation done! Time taken - {time.time() - start_time:.3f} seconds"
+    )
 
 
 if __name__ == "__main__":

@@ -10,12 +10,11 @@ class SimpleModel(pl.LightningModule):
         self.block = nn.Sequential(
             nn.Linear(num_inputs, 128),
             nn.ReLU(),
-            nn.Linear(128, num_outputs - 1),
-            nn.Sigmoid(),
+            nn.Linear(128, num_outputs),
         )
-        self.loss_fn = nn.BCELoss()
-        self.train_acc = torchmetrics.Accuracy()
-        self.valid_acc = torchmetrics.Accuracy()
+        self.loss_fn = nn.CrossEntropyLoss()
+        self.train_acc = torchmetrics.F1Score()
+        self.valid_acc = torchmetrics.F1Score()
 
     def forward(self, inputs):
         x = self.block(inputs)
@@ -28,19 +27,19 @@ class SimpleModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
-        loss = self.loss_fn(y_hat, y.view(-1, 1))
-        self.train_acc(y_hat.reshape(-1), y.type("torch.IntTensor"))
+        loss = self.loss_fn(y_hat, y)
+        self.train_acc(y_hat, y)
         self.log(
-            "train_acc", self.train_acc, prog_bar=True, on_epoch=True, on_step=False
+            "train_f1", self.train_acc, prog_bar=True, on_epoch=True, on_step=False
         )
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
-        val_loss = self.loss_fn(y_hat, y.view(-1, 1))
-        self.valid_acc(y_hat.reshape(-1), y.type("torch.IntTensor"))
-        self.log("valid_acc", self.valid_acc, prog_bar=True, on_epoch=True)
+        val_loss = self.loss_fn(y_hat, y)
+        self.valid_acc(y_hat, y)
+        self.log("valid_f1", self.valid_acc, prog_bar=True, on_epoch=True)
         return val_loss
 
     def predict_step(self, batch, batch_idx):

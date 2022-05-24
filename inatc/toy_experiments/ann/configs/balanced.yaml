@@ -3,10 +3,12 @@ info:
     random_state: 42
 dataset:
     n_samples: 1000
-    n_features: 5
-    n_classes: 2
+    n_features: 100
+    n_informative: 10
+    n_classes: 5
 training:
-    epochs: 2
+    epochs: 30
+    valid_epochs: 10
     batch_size: 64
     shuffle: True
     num_workers: 8
