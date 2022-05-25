@@ -6,5 +6,5 @@ dataset:
     n_features: 100
     n_informative: 10
     n_classes: 5
-    weights: weights: [0.7, 0.125, 0.125, 0.025, 0.025]
-generations: 300
+    weights: [0.7, 0.125, 0.125, 0.025, 0.025]
+generations: 100

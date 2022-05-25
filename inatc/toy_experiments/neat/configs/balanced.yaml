@@ -6,4 +6,4 @@ dataset:
     n_features: 100
     n_informative: 10
     n_classes: 5
-generations: 300
+generations: 100

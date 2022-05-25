@@ -4,9 +4,10 @@ import time
 import random
 import logging
 import visualise
+import wandb
 import pandas as pd
 import numpy as np
-from sklearn.metrics import classification_report, f1_score
+from sklearn.metrics import classification_report, f1_score, accuracy_score
 from inatc.toy_experiments.utils import read_fake_data, read_yaml, parse_arguments
 
 
@@ -17,6 +18,9 @@ def prepare_data():
     args = parse_arguments()
 
     global X_train, X_test, y_train, y_test, run_name, n_generations
+
+    # Initialising wandb.
+    wandb.init(project="inatc", entity="kad99kev", name=args.run_name)
 
     # Create experiment directories based on the type of experiment.
     run_name = "runs/" + args.run_name + "/"
@@ -60,7 +64,7 @@ def eval_genomes(genomes, config):
         for xi, xo in zip(X_train, y_train):
             output = net.activate(xi)
             outputs.append(np.argmax(output))
-        genome.fitness = f1_score(y_train, outputs, average="weighted")
+        genome.fitness = f1_score(y_train, outputs, average="macro")
 
 
 def run(config_file):
@@ -101,6 +105,7 @@ def run(config_file):
 
     # Finish training.
     logging.info(f"Training done! Time taken - {time.time() - start_time:.3f} seconds")
+    wandb.log({"training_time": time.time() - start_time})
 
     # Display the winning genome.
     print("\nBest genome:\n{!s}".format(winner))
@@ -115,7 +120,7 @@ def run(config_file):
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_train:
         pred = winner_net.activate(xi)
-        train_preds.append(1 if pred[0] > 0.5 else 0)
+        train_preds.append(np.argmax(pred))
     report = classification_report(y_train, train_preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "train_results.csv")
@@ -126,7 +131,7 @@ def run(config_file):
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_test:
         pred = winner_net.activate(xi)
-        test_preds.append(1 if pred[0] > 0.5 else 0)
+        test_preds.append(np.argmax(pred))
     report = classification_report(y_test, test_preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "test_results.csv")
@@ -135,6 +140,7 @@ def run(config_file):
     logging.info(
         f"Evaluation done! Time taken - {time.time() - start_time:.3f} seconds"
     )
+    wandb.log({"evaluation_time": time.time() - start_time})
 
     visualise.draw_net(
         config,
@@ -144,6 +150,18 @@ def run(config_file):
     )
     visualise.plot_stats(stats, run_name + "run_images/", ylog=False)
     visualise.plot_species(stats, run_name + "run_images/")
+
+    # Wandb logging.
+    wandb.log(
+        {
+            "train_acc": accuracy_score(y_train, train_preds),
+            "train_f1_macro": f1_score(y_train, train_preds, average="macro"),
+            "train_f1_weighted": f1_score(y_train, train_preds, average="weighted"),
+            "test_acc": accuracy_score(y_test, test_preds),
+            "test_f1_macro": f1_score(y_test, test_preds, average="macro"),
+            "test_f1_weighted": f1_score(y_test, test_preds, average="weighted"),
+        }
+    )
 
 
 if __name__ == "__main__":
