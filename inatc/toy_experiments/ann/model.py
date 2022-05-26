@@ -5,16 +5,16 @@ import torchmetrics
 
 
 class SimpleModel(pl.LightningModule):
-    def __init__(self, num_inputs, num_outputs):
+    def __init__(self, num_inputs, num_classes):
         super().__init__()
         self.block = nn.Sequential(
             nn.Linear(num_inputs, 128),
             nn.ReLU(),
-            nn.Linear(128, num_outputs),
+            nn.Linear(128, num_classes),
         )
         self.loss_fn = nn.CrossEntropyLoss()
-        self.train_acc = torchmetrics.F1Score()
-        self.valid_acc = torchmetrics.F1Score()
+        self.train_acc = torchmetrics.F1Score(average="macro", num_classes=num_classes)
+        self.valid_acc = torchmetrics.F1Score(average="macro", num_classes=num_classes)
 
     def forward(self, inputs):
         x = self.block(inputs)

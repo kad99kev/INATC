@@ -2,12 +2,13 @@ import os
 import random
 import time
 import logging
-from numpy import dtype
+import wandb
 import pandas as pd
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, f1_score, accuracy_score
 
 import pytorch_lightning as pl
-from pytorch_lightning import LightningModule, Trainer
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning import Trainer
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
@@ -41,6 +42,14 @@ def prepare_data():
         split_size, random_state, **cfg["dataset"]
     )
 
+    # Initialising wandb.
+    # Create wandb logger.
+    wandb_logger = WandbLogger(
+        **cfg["wandb"],
+        name=args.run_name,
+        config={**cfg["info"], **cfg["dataset"], **cfg["training"]},
+    )
+
     # Set seed.
     pl.seed_everything(random_state)
     random.seed(random_state)
@@ -50,10 +59,11 @@ def prepare_data():
         (cfg["dataset"]["n_features"], cfg["dataset"]["n_classes"]),
         (X_train, X_test, y_train, y_test),
         run_name,
+        wandb_logger,
     )
 
 
-def run(training_info, model_info, dataset, run_name):
+def run(training_info, model_info, dataset, run_name, wandb_logger):
     """
     Train the Neural Network.
 
@@ -78,7 +88,6 @@ def run(training_info, model_info, dataset, run_name):
 
     # Create dataloaders.
     X_train, X_test, y_train, y_test = dataset
-    print(y_train.shape)
     train_ds = TensorDataset(torch.Tensor(X_train), torch.LongTensor(y_train))
     train_dl = DataLoader(
         train_ds,
@@ -102,6 +111,7 @@ def run(training_info, model_info, dataset, run_name):
         default_root_dir=run_name,
         log_every_n_steps=len(X_train) / training_info["batch_size"],
         check_val_every_n_epoch=training_info["valid_epochs"],
+        logger=wandb_logger,
     )
 
     # Train model.
@@ -109,6 +119,7 @@ def run(training_info, model_info, dataset, run_name):
 
     # Finish training.
     logging.info(f"Training done! Time taken - {time.time() - start_time:.3f} seconds")
+    wandb.log({"training_time": time.time() - start_time})
 
     # Start evaluation.
     logging.info("Starting evaluation.")
@@ -144,9 +155,21 @@ def run(training_info, model_info, dataset, run_name):
     logging.info(
         f"Evaluation done! Time taken - {time.time() - start_time:.3f} seconds"
     )
+    wandb.log({"evaluation_time": time.time() - start_time})
+
+    # Wandb logging.
+    wandb.log(
+        {
+            "train_acc": accuracy_score(y_train, train_preds),
+            "train_f1_macro": f1_score(y_train, train_preds, average="macro"),
+            "train_f1_weighted": f1_score(y_train, train_preds, average="weighted"),
+            "test_acc": accuracy_score(y_test, test_preds),
+            "test_f1_macro": f1_score(y_test, test_preds, average="macro"),
+            "test_f1_weighted": f1_score(y_test, test_preds, average="weighted"),
+        }
+    )
 
 
 if __name__ == "__main__":
     # Prepare data and run the NN.
-    training_info, model_info, dataset, run_name = prepare_data()
-    run(training_info, model_info, dataset, run_name)
+    run(*prepare_data())

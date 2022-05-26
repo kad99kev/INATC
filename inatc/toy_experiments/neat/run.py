@@ -19,9 +19,6 @@ def prepare_data():
 
     global X_train, X_test, y_train, y_test, run_name, n_generations
 
-    # Initialising wandb.
-    wandb.init(project="inatc", entity="kad99kev", name=args.run_name)
-
     # Create experiment directories based on the type of experiment.
     run_name = "runs/" + args.run_name + "/"
     if os.path.isdir(run_name):
@@ -42,6 +39,13 @@ def prepare_data():
     split_size, random_state = cfg["info"].values()
     X_train, X_test, y_train, y_test = read_fake_data(
         split_size, random_state, **cfg["dataset"]
+    )
+
+    # Initialising wandb.
+    wandb.init(
+        **cfg["wandb"],
+        name=args.run_name,
+        config={**cfg["info"], **cfg["dataset"], "generations": cfg["generations"]},
     )
 
     # Set seed.

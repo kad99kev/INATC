@@ -7,3 +7,6 @@ dataset:
     n_informative: 10
     n_classes: 5
 generations: 100
+wandb:
+    project: inatc
+    entity: kad99kev

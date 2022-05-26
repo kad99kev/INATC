@@ -12,3 +12,6 @@ training:
     batch_size: 64
     shuffle: True
     num_workers: 8
+wandb:
+    project: inatc
+    entity: kad99kev
