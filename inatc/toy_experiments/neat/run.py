@@ -1,10 +1,11 @@
 import os
 import neat
 import time
+import wandb
 import random
 import logging
 import visualise
-import wandb
+import multiprocessing
 import pandas as pd
 import numpy as np
 from sklearn.metrics import classification_report, f1_score, accuracy_score
@@ -36,20 +37,25 @@ def prepare_data():
 
     # Create fake dataset.
     cfg = read_yaml(data_file)
-    split_size, random_state = cfg["info"].values()
+    split_size = cfg["info"]["split_size"]
     X_train, X_test, y_train, y_test = read_fake_data(
-        split_size, random_state, **cfg["dataset"]
+        split_size, args.seed, **cfg["dataset"]
     )
 
     # Initialising wandb.
     wandb.init(
         **cfg["wandb"],
-        name=args.run_name,
-        config={**cfg["info"], **cfg["dataset"], "generations": cfg["generations"]},
+        name=f"{args.run_name}_{args.seed}",
+        config={
+            **cfg["info"],
+            **cfg["dataset"],
+            "generations": cfg["generations"],
+            "seed": args.seed,
+        },
     )
 
     # Set seed.
-    random.seed(random_state)
+    random.seed(args.seed)
 
     # Number of generations.
     n_generations = cfg["generations"]
@@ -58,17 +64,37 @@ def prepare_data():
 # Most of the code has been taken from the XOR example in their documentation.
 # Source: https://github.com/CodeReclaimers/neat-python/blob/master/examples/xor/evolve-feedforward.py
 # Config file source: https://github.com/CodeReclaimers/neat-python/blob/master/examples/xor/config-feedforward
+# Code for multiprocessing referred from: https://github.com/CodeReclaimers/neat-python/blob/master/examples/openai-lander/evolve.py
+
+
+def compute_fitness(net, X_train, y_train):
+    outputs = []
+    for xi, xo in zip(X_train, y_train):
+        output = net.activate(xi)
+        outputs.append(np.argmax(output))
+    return f1_score(y_train, outputs, average="macro")
 
 
 def eval_genomes(genomes, config):
-    for genome_id, genome in genomes:
-        genome.fitness = 0.0
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
-        outputs = []
-        for xi, xo in zip(X_train, y_train):
-            output = net.activate(xi)
-            outputs.append(np.argmax(output))
-        genome.fitness = f1_score(y_train, outputs, average="macro")
+    num_workers = multiprocessing.cpu_count()
+
+    nets = []
+
+    for genome_id, g in genomes:
+        nets.append((g, neat.nn.FeedForwardNetwork.create(g, config)))
+
+    if num_workers < 2:
+        for genome, net in nets:
+            genome.fitness = compute_fitness(net, X_train, y_train)
+    else:
+        with multiprocessing.Pool(num_workers) as pool:
+            jobs = []
+            for genome, net in nets:
+                jobs.append(pool.apply_async(compute_fitness, (net, X_train, y_train)))
+
+            for job, (genome_id, genome) in zip(jobs, genomes):
+                fitness = job.get(timeout=None)
+                genome.fitness = fitness
 
 
 def run(config_file):

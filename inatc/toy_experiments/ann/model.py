@@ -5,6 +5,17 @@ import torchmetrics
 
 
 class SimpleModel(pl.LightningModule):
+    """
+    Simple Feedforward Neural Network with Linear Layers.
+
+    The model has been implemented using PyTorch Lightning.
+    For more information, see - https://pytorch-lightning.readthedocs.io/en/latest/starter/introduction.html#define-a-lightningmodule
+
+    Arguments:
+        num_inputs: Number of input features.
+        num_classes: Number of output classes.
+    """
+
     def __init__(self, num_inputs, num_classes):
         super().__init__()
         self.block = nn.Sequential(

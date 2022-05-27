@@ -15,6 +15,9 @@ def parse_arguments():
     parser.add_argument(
         "-n", "--run_name", help="The name of the current run.", type=str
     )
+    parser.add_argument(
+        "-s", "--seed", help="Seed for random number generator.", type=int
+    )
     return parser.parse_args()
 
 

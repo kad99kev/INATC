@@ -37,22 +37,27 @@ def prepare_data():
 
     # Create fake dataset.
     cfg = read_yaml(data_file)
-    split_size, random_state = cfg["info"].values()
+    split_size = cfg["info"]["split_size"]
     X_train, X_test, y_train, y_test = read_fake_data(
-        split_size, random_state, **cfg["dataset"]
+        split_size, args.seed, **cfg["dataset"]
     )
 
     # Initialising wandb.
     # Create wandb logger.
     wandb_logger = WandbLogger(
         **cfg["wandb"],
-        name=args.run_name,
-        config={**cfg["info"], **cfg["dataset"], **cfg["training"]},
+        name=f"{args.run_name}_{args.seed}",
+        config={
+            **cfg["info"],
+            **cfg["dataset"],
+            **cfg["training"],
+            "seed": args.seed,
+        },
     )
 
     # Set seed.
-    pl.seed_everything(random_state)
-    random.seed(random_state)
+    pl.seed_everything(args.seed)
+    random.seed(args.seed)
 
     return (
         cfg["training"],
@@ -68,10 +73,11 @@ def run(training_info, model_info, dataset, run_name, wandb_logger):
     Train the Neural Network.
 
     Arguments:
-        epochs: Number of training epochs.
-        dataset: A tuple that contains (X_train, X_test, y_train, y_test)
-        model_info: Data required to build the model.
+        training_info: A dictionary containing information required for training.
+        model_info: A dictionary containing information required for model creation.
+        dataset: A tuple that contains (X_train, X_test, y_train, y_test).
         run_name: The name of the current run. Will be used for checkpointing.
+        wandb_logger: A wandb logger object for experiment tracking.
     """
 
     # Create logger.
