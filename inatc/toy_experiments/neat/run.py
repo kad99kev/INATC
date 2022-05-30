@@ -21,7 +21,7 @@ def prepare_data():
     global X_train, X_test, y_train, y_test, run_name, n_generations
 
     # Create experiment directories based on the type of experiment.
-    run_name = "runs/" + args.run_name + "/"
+    run_name = "runs/" + f"{args.run_name}_{args.seed}" + "/"
     if os.path.isdir(run_name):
         raise FileExistsError(
             "A previous run state already exists! Please rename the previous run or delete the folder."
