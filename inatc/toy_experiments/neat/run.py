@@ -70,7 +70,7 @@ def prepare_data():
 def compute_fitness(net, X_train, y_train):
     outputs = []
     for xi, xo in zip(X_train, y_train):
-        output = net.activate(xi)
+        output = neat.math_util.softmax(net.activate(xi))
         outputs.append(np.argmax(output))
     return f1_score(y_train, outputs, average="macro")
 
@@ -79,6 +79,7 @@ def eval_genomes(genomes, config):
     num_workers = multiprocessing.cpu_count()
 
     nets = []
+    fitnesses = []
 
     for genome_id, g in genomes:
         nets.append((g, neat.nn.FeedForwardNetwork.create(g, config)))
@@ -86,6 +87,7 @@ def eval_genomes(genomes, config):
     if num_workers < 2:
         for genome, net in nets:
             genome.fitness = compute_fitness(net, X_train, y_train)
+            fitnesses.append(genome.fitness)
     else:
         with multiprocessing.Pool(num_workers) as pool:
             jobs = []
@@ -95,6 +97,8 @@ def eval_genomes(genomes, config):
             for job, (genome_id, genome) in zip(jobs, genomes):
                 fitness = job.get(timeout=None)
                 genome.fitness = fitness
+                fitnesses.append(genome.fitness)
+    wandb.log({"average_fitness": np.mean(fitnesses)})
 
 
 def run(config_file):
@@ -149,9 +153,11 @@ def run(config_file):
     train_preds = []
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_train:
-        pred = winner_net.activate(xi)
+        pred = neat.math_util.softmax(winner_net.activate(xi))
         train_preds.append(np.argmax(pred))
-    report = classification_report(y_train, train_preds, output_dict=True)
+    report = classification_report(
+        y_train, train_preds, output_dict=True, zero_division=0
+    )
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "train_results.csv")
 
@@ -160,9 +166,11 @@ def run(config_file):
     test_preds = []
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     for xi in X_test:
-        pred = winner_net.activate(xi)
+        pred = neat.math_util.softmax(winner_net.activate(xi))
         test_preds.append(np.argmax(pred))
-    report = classification_report(y_test, test_preds, output_dict=True)
+    report = classification_report(
+        y_test, test_preds, output_dict=True, zero_division=0
+    )
     df = pd.DataFrame(report).transpose()
     df.to_csv(run_name + "test_results.csv")
 

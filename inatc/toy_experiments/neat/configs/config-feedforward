@@ -6,9 +6,9 @@ reset_on_extinction = False
 
 [DefaultGenome]
 # node activation options
-activation_default = clamped
+activation_default = relu
 activation_mutate_rate = 0.0
-activation_options = clamped
+activation_options = relu
 
 # node aggregation options
 aggregation_default = sum
