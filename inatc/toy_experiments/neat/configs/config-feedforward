@@ -6,14 +6,14 @@ reset_on_extinction = False
 
 [DefaultGenome]
 # node activation options
-activation_default = relu
-activation_mutate_rate = 0.0
-activation_options = relu
+activation_default = sigmoid
+activation_mutate_rate = 0.1
+activation_options = relu sigmoid clamped softplus tanh
 
 # node aggregation options
 aggregation_default = sum
-aggregation_mutate_rate = 0.0
-aggregation_options = sum
+aggregation_mutate_rate = 0.1
+aggregation_options = sum mean product
 
 # node bias options
 bias_init_mean = 0.0

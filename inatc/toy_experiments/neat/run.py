@@ -9,7 +9,7 @@ import multiprocessing
 import pandas as pd
 import numpy as np
 from sklearn.metrics import classification_report, f1_score, accuracy_score
-from inatc.toy_experiments.utils import read_fake_data, read_yaml, parse_arguments
+from inatc.utils import read_fake_data, read_yaml, parse_arguments
 
 
 def prepare_data():
@@ -67,9 +67,9 @@ def prepare_data():
 # Code for multiprocessing referred from: https://github.com/CodeReclaimers/neat-python/blob/master/examples/openai-lander/evolve.py
 
 
-def compute_fitness(net, X_train, y_train):
+def compute_fitness(net, X_train):
     outputs = []
-    for xi, xo in zip(X_train, y_train):
+    for xi in X_train:
         output = neat.math_util.softmax(net.activate(xi))
         outputs.append(np.argmax(output))
     return f1_score(y_train, outputs, average="macro")
@@ -86,13 +86,13 @@ def eval_genomes(genomes, config):
 
     if num_workers < 2:
         for genome, net in nets:
-            genome.fitness = compute_fitness(net, X_train, y_train)
+            genome.fitness = compute_fitness(net, X_train)
             fitnesses.append(genome.fitness)
     else:
         with multiprocessing.Pool(num_workers) as pool:
             jobs = []
             for genome, net in nets:
-                jobs.append(pool.apply_async(compute_fitness, (net, X_train, y_train)))
+                jobs.append(pool.apply_async(compute_fitness, (net, X_train)))
 
             for job, (genome_id, genome) in zip(jobs, genomes):
                 fitness = job.get(timeout=None)
