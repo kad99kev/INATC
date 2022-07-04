@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, classification_report, accuracy_score
 from sklearn.datasets import fetch_20newsgroups
-from inatc.utils import read_yaml, parse_arguments
+from inatc.utils import read_yaml, parse_arguments, is_internet
 
 
 def prepare_data():
@@ -55,6 +55,7 @@ def prepare_data():
             "generations": cfg["generations"],
             "seed": args.seed,
         },
+        mode="online" if is_internet() else "offline",
         settings=wandb.Settings(start_method="fork")
     )
 

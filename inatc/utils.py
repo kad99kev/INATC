@@ -63,3 +63,14 @@ def get_embeddings(text, tokenizer, model):
     inputs = tokenizer(text, return_tensors="tf", padding=True, truncation=True)
     outputs = model(**inputs, training=False)
     return outputs.pooler_output
+
+def is_internet():
+    """
+    Check to see if internet is available.
+    """
+
+    try:
+        urllib.request.urlopen('http://google.com')
+        return True
+    except:
+        return False
