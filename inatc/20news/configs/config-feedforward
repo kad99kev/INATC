@@ -1,14 +1,14 @@
 [NEAT]
 fitness_criterion = max
-fitness_threshold = 1.0
+fitness_threshold = 0.0
 pop_size = 150
 reset_on_extinction = False
 
 [DefaultGenome]
 # node activation options
-activation_default = sigmoid
-activation_mutate_rate = 0.1
-activation_options = relu sigmoid clamped softplus tanh
+activation_default = relu
+activation_mutate_rate = 0.0
+activation_options = relu
 
 # node aggregation options
 aggregation_default = sum
@@ -37,7 +37,7 @@ enabled_default = True
 enabled_mutate_rate = 0.01
 
 feed_forward = True
-initial_connection = full
+initial_connection = full_direct
 
 # node add/remove rates
 node_add_prob = 0.2
@@ -70,7 +70,7 @@ weight_replace_rate = 0.1
 compatibility_threshold = 3.0
 
 [DefaultStagnation]
-species_fitness_func = max
+species_fitness_func = mean
 max_stagnation = 20
 species_elitism = 2
 

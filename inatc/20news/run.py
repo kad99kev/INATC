@@ -8,7 +8,7 @@ import multiprocessing
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-from sklearn.metrics import f1_score, classification_report, accuracy_score
+from sklearn.metrics import f1_score, classification_report, accuracy_score, log_loss
 from sklearn.datasets import fetch_20newsgroups
 from inatc.utils import read_yaml, parse_arguments, is_internet
 
@@ -39,8 +39,8 @@ def prepare_data():
 
     # Load dataset
     train_data = fetch_20newsgroups(subset="train", shuffle=False)
-    y_train, target_names = train_data.target, train_data.target_names
-    X_train = np.load("data/train.npy")
+    y_train, target_names = train_data.target[:100], train_data.target_names
+    X_train = np.load("data/train.npy")[:100]
 
     test_data = fetch_20newsgroups(subset="test", shuffle=False)
     y_test = test_data.target
@@ -81,8 +81,8 @@ def compute_fitness(net, X_train, y_train):
     outputs = []
     for xi in X_train:
         output = neat.math_util.softmax(net.activate(xi))
-        outputs.append(np.argmax(output))
-    return f1_score(y_train, outputs, average="macro")
+        outputs.append(output)
+    return -log_loss(y_train, outputs)
 
 
 def eval_genomes(genomes, config):
