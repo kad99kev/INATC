@@ -1,0 +1,1 @@
+python run.py -c config.yaml -n reuters -s 0

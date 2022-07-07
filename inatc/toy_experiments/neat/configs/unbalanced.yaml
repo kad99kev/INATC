@@ -2,7 +2,7 @@ info:
     split_size: 0.3
     type: unbalanced
     method: neat
-    fitness_function: f1_score
+    fitness_function: accuracy_score
 dataset:
     n_samples: 1000
     n_features: 100
@@ -11,5 +11,5 @@ dataset:
     weights: [0.7, 0.125, 0.125, 0.025, 0.025]
 generations: 100
 wandb:
-    project: inatc
+    project: inatc-toy
     entity: kad99kev

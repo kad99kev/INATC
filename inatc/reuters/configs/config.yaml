@@ -1,0 +1,8 @@
+info:
+    type: reuters-21578
+    method: neat
+    fitness_function: f1_score
+generations: 100
+wandb:
+    project: inatc
+    entity: kad99kev
