@@ -83,4 +83,19 @@ def sigmoid(z):
     Arguments:
         z: Array of inputs.
     """
-    return 1/(1 + np.exp(-z))
+    z = np.array(z)
+    out = 1/(1 + np.exp(-z))
+    return list(out)
+
+def label_transform(inputs, threshold=0.5):
+    """
+    Transform values into multi-label format based on its probabilities.
+
+    Arguments:
+        inputs: Array of probabilities for a particular label.
+    """
+    input_arr = np.array(inputs)
+    input_arr[input_arr > threshold] = 1
+    input_arr[input_arr != 1] = 0
+    return list(input_arr)
+    

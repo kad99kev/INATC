@@ -7,17 +7,21 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, f1_score
 
+from inatc.utils.helpers import sigmoid, label_transform
+
 class VanillaNEAT:
 
-    def __init__(self, config_file, fitness_evaluator, run_name):
+    def __init__(self, config_file, fitness_evaluator, run_name, multi_class=True):
         self.config_file = config_file
         self.run_name = run_name
         self.fitness_evaluator = fitness_evaluator
+        self.activation = neat.math_util.softmax if multi_class else sigmoid # Else multi-label.
+        self.is_multi_class = multi_class
 
     
     def _fitness_function(self, preds):
         if self.fitness_evaluator == "f1_score":
-            return f1_score(self.y_train, preds, average="macro")
+            return f1_score(self.y_train, preds, average="macro", zero_division=0)
         if self.fitness_evaluator == "accuracy_score":
             return accuracy_score(self.y_train, preds)
     
@@ -25,8 +29,9 @@ class VanillaNEAT:
         try:
             outputs = []
             for xi in self.X_train:
-                output = neat.math_util.softmax(net.activate(xi))
-                outputs.append(np.argmax(output))
+                output = self.activation(net.activate(xi))
+                output = np.argmax(output) if self.is_multi_class else label_transform(output)
+                outputs.append(output)
             return self._fitness_function(outputs)
         except OverflowError:
             return 0
@@ -91,6 +96,7 @@ class VanillaNEAT:
         
         preds = []
         for x in X:
-            pred = neat.math_util.softmax(self.winner_net.activate(x))
-            preds.append(np.argmax(pred))
+            pred = self.activation(self.winner_net.activate(x))
+            pred = np.argmax(pred) if self.is_multi_class else label_transform(pred)
+            preds.append(pred)
         return preds

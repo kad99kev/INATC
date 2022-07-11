@@ -21,7 +21,7 @@ class ECOCNEAT:
     
     def _fitness_function(self, preds):
         if self.fitness_evaluator == "f1_score":
-            return f1_score(self.y_, preds, average="macro")
+            return f1_score(self.y_, preds, average="macro", zero_division=0)
         if self.fitness_evaluator == "accuracy_score":
             return accuracy_score(self.y_, preds)
     

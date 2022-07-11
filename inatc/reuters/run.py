@@ -14,7 +14,8 @@ from nltk.corpus import reuters
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import f1_score, classification_report, accuracy_score, log_loss
 
-from inatc.utils import read_yaml, parse_arguments, is_internet, sigmoid
+from inatc.algos import VanillaNEAT
+from inatc.utils.helpers import read_yaml, parse_arguments, is_internet, sigmoid
 
 
 def prepare_data():
@@ -22,8 +23,6 @@ def prepare_data():
     Parse arguments and prepare experiment data folders.
     """
     args = parse_arguments()
-
-    global X_train, X_test, y_train, y_test, target_names, run_name, n_generations
 
     # Create experiment directories based on the type of experiment.
     run_name = "runs/" + f"{args.run_name}_{args.seed}" + "/"
@@ -83,42 +82,14 @@ def prepare_data():
     # Print number of available CPUs.
     print(f"Number of available CPUs: {multiprocessing.cpu_count()}")
 
+    return X_train, X_test, y_train, y_test, run_name, n_generations, cfg["info"]["fitness_function"]
 
-def compute_fitness(net, X_train, y_train):
-    outputs = []
-    for xi in X_train:
-        output = sigmoid(np.array(net.activate(xi)))
-        outputs.append(output)
-    return -log_loss(y_train, outputs)
+def run(data, config_file):
 
+    X_train, X_test, y_train, y_test, run_name, n_generations, fitness_evaluator = data
+    
+    neat_model = VanillaNEAT(config_file, fitness_evaluator, run_name, multi_class=False)
 
-def eval_genomes(genomes, config):
-    num_workers = multiprocessing.cpu_count()
-
-    nets = []
-    fitnesses = []
-
-    for genome_id, g in genomes:
-        nets.append((g, neat.nn.FeedForwardNetwork.create(g, config)))
-
-    if num_workers < 2:
-        for genome, net in tqdm(nets):
-            genome.fitness = compute_fitness(net, X_train, y_train)
-            fitnesses.append(genome.fitness)
-    else:
-        with multiprocessing.Pool(num_workers) as pool:
-            jobs = []
-            for genome, net in nets:
-                jobs.append(pool.apply_async(compute_fitness, (net, X_train, y_train)))
-
-            for job, (genome_id, genome) in tqdm(zip(jobs, genomes), total=len(jobs)):
-                fitness = job.get(timeout=None)
-                genome.fitness = fitness
-                fitnesses.append(genome.fitness)
-    wandb.log({"average_fitness": np.mean(fitnesses)})
-
-
-def run(config_file):
     # Create logger.
     start_time = time.time()
     logging.basicConfig(
@@ -131,35 +102,11 @@ def run(config_file):
 
     logging.info("Starting training.")
 
-    # Load configuration.
-    config = neat.Config(
-        neat.DefaultGenome,
-        neat.DefaultReproduction,
-        neat.DefaultSpeciesSet,
-        neat.DefaultStagnation,
-        config_file,
-    )
-
-    # Create the population, which is the top-level object for a NEAT run.
-    p = neat.Population(config)
-
-    # Add a stdout reporter to show progress in the terminal.
-    p.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter()
-    p.add_reporter(stats)
-    p.add_reporter(
-        neat.Checkpointer(100, filename_prefix=run_name + "run_checkpoints/checkpoint")
-    )
-
-    # Run for up to 300 generations.
-    winner = p.run(eval_genomes, n_generations)
+    neat_model.train(X_train, y_train, n_generations)
 
     # Finish training.
     logging.info(f"Training done! Time taken - {time.time() - start_time:.3f} seconds")
     wandb.log({"training_time": time.time() - start_time})
-
-    # Display the winning genome.
-    print("\nBest genome:\n{!s}".format(winner))
 
     # Start evaluation.
     logging.info("Starting evaluation.")
@@ -167,11 +114,7 @@ def run(config_file):
 
     # Evaluate on training data.
     logging.info("Running training evaluation...")
-    train_preds = []
-    winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
-    for xi in X_train:
-        pred = neat.math_util.softmax(winner_net.activate(xi))
-        train_preds.append(np.argmax(pred))
+    train_preds = neat_model.predict(X_train)
     report = classification_report(
         y_train, train_preds, output_dict=True, zero_division=0
     )
@@ -180,11 +123,7 @@ def run(config_file):
 
     # Evaluate on testing data.
     logging.info("Running testing evaluation...")
-    test_preds = []
-    winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
-    for xi in X_test:
-        pred = neat.math_util.softmax(winner_net.activate(xi))
-        test_preds.append(np.argmax(pred))
+    test_preds = neat_model.predict(X_test)
     report = classification_report(
         y_test, test_preds, output_dict=True, zero_division=0
     )
@@ -223,7 +162,7 @@ if __name__ == "__main__":
     # Determine path to configuration file. This path manipulation is
     # here so that the script will run successfully regardless of the
     # current working directory.
-    prepare_data()
+    data = prepare_data()
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "configs/config-feedforward")
-    run(config_path)
+    config_path = os.path.join(local_dir, "configs/config-1")
+    run(data, config_path)
