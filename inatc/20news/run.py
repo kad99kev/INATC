@@ -48,6 +48,14 @@ def prepare_data():
     y_test = test_data.target
     X_test = np.load("data/test.npy")
 
+    idx = np.where((y_train == 0) | (y_train == 1) | (y_train == 2))
+    X_train = X_train[idx]
+    y_train = y_train[idx]
+
+    t_idx = np.where((y_test == 0) | (y_test == 1) | (y_test == 2))
+    X_test = X_test[t_idx]
+    y_test = y_test[t_idx]
+
     # Initialising wandb.
     wandb.init(
         **cfg["wandb"],
@@ -162,5 +170,5 @@ if __name__ == "__main__":
     # current working directory.
     data = prepare_data()
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "configs/config-feedforward")
+    config_path = os.path.join(local_dir, "configs/config-1")
     run(data, config_path)

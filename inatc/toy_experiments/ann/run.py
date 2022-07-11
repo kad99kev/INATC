@@ -14,7 +14,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 from model import SimpleModel
-from inatc.toy_experiments.utils import read_fake_data, read_yaml, parse_arguments
+from inatc.utils.helpers import read_fake_data, read_yaml, parse_arguments
 
 
 def prepare_data():

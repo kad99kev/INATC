@@ -74,8 +74,8 @@ def run(data, config_file):
 
     X_train, X_test, y_train, y_test, run_name, n_generations, fitness_evaluator = data
 
-    # neat_model = VanillaNEAT(config_file, fitness_evaluator, run_name)
-    neat_model = ECOCNEAT(config_file, fitness_evaluator, run_name)
+    neat_model = VanillaNEAT(config_file, fitness_evaluator, run_name)
+    # neat_model = ECOCNEAT(config_file, fitness_evaluator, run_name)
 
     # Create logger.
     start_time = time.time()
@@ -160,5 +160,5 @@ if __name__ == "__main__":
     # current working directory.
     data = prepare_data()
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "configs/config-feedforward")
+    config_path = os.path.join(local_dir, "configs/config-2")
     run(data, config_path)
