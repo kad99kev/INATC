@@ -41,20 +41,12 @@ def prepare_data():
 
     # Load dataset
     train_data = fetch_20newsgroups(subset="train", shuffle=False)
-    y_train, target_names = train_data.target[:100], train_data.target_names
-    X_train = np.load("data/train.npy")[:100]
+    y_train, target_names = train_data.target, train_data.target_names
+    X_train = np.load("data/train.npy")
 
     test_data = fetch_20newsgroups(subset="test", shuffle=False)
     y_test = test_data.target
     X_test = np.load("data/test.npy")
-
-    idx = np.where((y_train == 0) | (y_train == 1) | (y_train == 2))
-    X_train = X_train[idx]
-    y_train = y_train[idx]
-
-    t_idx = np.where((y_test == 0) | (y_test == 1) | (y_test == 2))
-    X_test = X_test[t_idx]
-    y_test = y_test[t_idx]
 
     # Initialising wandb.
     wandb.init(
