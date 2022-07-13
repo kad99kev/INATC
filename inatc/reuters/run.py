@@ -1,5 +1,4 @@
 import os
-import neat
 import time
 import wandb
 import random
@@ -9,13 +8,12 @@ import multiprocessing
 import numpy as np
 import pandas as pd
 
-from tqdm import tqdm
 from nltk.corpus import reuters
 from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.metrics import f1_score, classification_report, accuracy_score, log_loss
+from sklearn.metrics import f1_score, classification_report, accuracy_score
 
 from inatc.algos import VanillaNEAT
-from inatc.utils.helpers import read_yaml, parse_arguments, is_internet, sigmoid
+from inatc.utils.helpers import read_yaml, parse_arguments, is_internet
 
 
 def prepare_data():
@@ -41,7 +39,7 @@ def prepare_data():
     os.mkdir(run_name + "run_images")
 
     # Load dataset
-    X_train = np.load("data/train.npy")[:100]
+    X_train = np.load("data/train.npy")
     y_train = [reuters.categories(f_id) for f_id in reuters.fileids() if "train" in f_id]
 
     X_test = np.load("data/test.npy")
@@ -49,7 +47,7 @@ def prepare_data():
 
     # Encode labels.
     mlb = MultiLabelBinarizer()
-    y_train = mlb.fit_transform(y_train)[:100]
+    y_train = mlb.fit_transform(y_train)
     y_test = mlb.transform(y_test)
 
     # Initialising wandb.
