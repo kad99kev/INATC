@@ -133,3 +133,6 @@ wandb/
 
 # Ignore runs
 runs/
+
+# Ignore DS_Store
+.DS_Store
