@@ -58,7 +58,7 @@ def prepare_data():
             "seed": args.seed,
         },
         mode="online" if is_internet() else "offline",
-        settings=wandb.Settings(start_method="fork")
+        settings=wandb.Settings(start_method="fork"),
     )
 
     # Set seed.
@@ -78,16 +78,34 @@ def prepare_data():
     # Print number of available CPUs.
     print(f"Number of available CPUs: {multiprocessing.cpu_count()}")
 
-    return X_train, X_test, y_train, y_test, target_names, run_name, n_generations, cfg["info"]["fitness_function"]
+    return (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        target_names,
+        run_name,
+        n_generations,
+        cfg["info"]["fitness_function"],
+    )
 
 
 def run(data, config_file):
 
-    X_train, X_test, y_train, y_test, target_names, run_name, n_generations, fitness_evaluator = data
+    (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        target_names,
+        run_name,
+        n_generations,
+        fitness_evaluator,
+    ) = data
 
     # neat_model = VanillaNEAT(config_file, fitness_evaluator, run_name)
     neat_model = ECOCNEAT(config_file, fitness_evaluator, run_name)
-    
+
     # Create logger.
     start_time = time.time()
     logging.basicConfig(

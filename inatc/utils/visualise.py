@@ -8,7 +8,7 @@ import numpy as np
 
 
 def plot_stats(statistics, path, ylog=False, view=False, filename="avg_fitness.svg"):
-    """ Plots the population's average and best fitness. """
+    """Plots the population's average and best fitness."""
     if plt is None:
         warnings.warn(
             "This display is not available due to a missing optional dependency (matplotlib)"
@@ -41,7 +41,7 @@ def plot_stats(statistics, path, ylog=False, view=False, filename="avg_fitness.s
 
 
 def plot_spikes(spikes, view=False, filename=None, title=None):
-    """ Plots the trains for a single spiking neuron. """
+    """Plots the trains for a single spiking neuron."""
     t_values = [t for t, I, v, u, f in spikes]
     v_values = [v for t, I, v, u, f in spikes]
     u_values = [u for t, I, v, u, f in spikes]
@@ -90,7 +90,7 @@ def plot_spikes(spikes, view=False, filename=None, title=None):
 
 
 def plot_species(statistics, path, view=False, filename="speciation.svg"):
-    """ Visualizes speciation throughout evolution. """
+    """Visualizes speciation throughout evolution."""
     if plt is None:
         warnings.warn(
             "This display is not available due to a missing optional dependency (matplotlib)"
@@ -128,7 +128,7 @@ def draw_net(
     node_colors=None,
     fmt="svg",
 ):
-    """ Receives a genome and draws a neural network with arbitrary topology. """
+    """Receives a genome and draws a neural network with arbitrary topology."""
     # Attributes for network nodes.
     if graphviz is None:
         warnings.warn(

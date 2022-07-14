@@ -65,16 +65,18 @@ def get_embeddings(text, tokenizer, model):
     outputs = model(**inputs, training=False)
     return outputs.pooler_output
 
+
 def is_internet():
     """
     Check to see if internet is available.
     """
 
     try:
-        urllib.request.urlopen('http://google.com')
+        urllib.request.urlopen("http://google.com")
         return True
     except:
         return False
+
 
 def sigmoid(z):
     """
@@ -84,8 +86,9 @@ def sigmoid(z):
         z: Array of inputs.
     """
     z = np.array(z)
-    out = 1/(1 + np.exp(-z))
+    out = 1 / (1 + np.exp(-z))
     return list(out)
+
 
 def label_transform(inputs, threshold=0.5):
     """
@@ -98,4 +101,3 @@ def label_transform(inputs, threshold=0.5):
     input_arr[input_arr > threshold] = 1
     input_arr[input_arr != 1] = 0
     return list(input_arr)
-    

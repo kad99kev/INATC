@@ -61,7 +61,15 @@ def prepare_data():
     # Number of generations.
     n_generations = cfg["generations"]
 
-    return X_train, X_test, y_train, y_test, run_name, n_generations, cfg["info"]["fitness_function"]
+    return (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        run_name,
+        n_generations,
+        cfg["info"]["fitness_function"],
+    )
 
 
 # Most of the code has been taken from the XOR example in their documentation.

@@ -10,21 +10,20 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, euclidean_distances, f1_score
 
-class ECOCNEAT:
 
+class ECOCNEAT:
     def __init__(self, config_file, fitness_evaluator, run_name, code_size=1.5):
         self.config_file = config_file
         self.run_name = run_name
         self.fitness_evaluator = fitness_evaluator
         self.code_size = code_size
 
-    
     def _fitness_function(self, preds):
         if self.fitness_evaluator == "f1_score":
             return f1_score(self.y_, preds, average="macro", zero_division=0)
         if self.fitness_evaluator == "accuracy_score":
             return accuracy_score(self.y_, preds)
-    
+
     def compute_fitness(self, net):
         try:
             outputs = []
@@ -34,7 +33,7 @@ class ECOCNEAT:
             return self._fitness_function(outputs)
         except OverflowError:
             return 0
-    
+
     def eval_genomes(self, genomes, config):
         num_workers = multiprocessing.cpu_count()
 
@@ -52,9 +51,11 @@ class ECOCNEAT:
             with multiprocessing.Pool(num_workers) as pool:
                 jobs = []
                 for genome, net in nets:
-                    jobs.append(pool.apply_async(self.compute_fitness, (net, )))
+                    jobs.append(pool.apply_async(self.compute_fitness, (net,)))
 
-                for job, (genome_id, genome) in tqdm(zip(jobs, genomes), total=len(jobs)):
+                for job, (genome_id, genome) in tqdm(
+                    zip(jobs, genomes), total=len(jobs)
+                ):
                     fitness = job.get(timeout=None)
                     genome.fitness = fitness
                     fitnesses.append(genome.fitness)
@@ -74,8 +75,12 @@ class ECOCNEAT:
 
         classes_index = {c: i for i, c in enumerate(self.classes)}
 
-        Y = np.array([self.code_book[classes_index[y_train[i]]] for i in range(len(self.y_train))])
-
+        Y = np.array(
+            [
+                self.code_book[classes_index[y_train[i]]]
+                for i in range(len(self.y_train))
+            ]
+        )
 
         # Load configuration.
         config = neat.Config(
@@ -103,7 +108,9 @@ class ECOCNEAT:
             stats = neat.StatisticsReporter()
             p.add_reporter(stats)
             p.add_reporter(
-                neat.Checkpointer(100, filename_prefix=self.run_name + "run_checkpoints/checkpoint")
+                neat.Checkpointer(
+                    100, filename_prefix=self.run_name + "run_checkpoints/checkpoint"
+                )
             )
 
             # Run for up to N generations.
@@ -114,8 +121,10 @@ class ECOCNEAT:
 
     def predict(self, X):
         if not hasattr(self, "winner_genomes"):
-            raise RuntimeError("You must train the model before prediction. Run the .train() function to begin training.")
-        
+            raise RuntimeError(
+                "You must train the model before prediction. Run the .train() function to begin training."
+            )
+
         pred_arr = []
         for winner_net in self.winner_nets:
             net_preds = []
