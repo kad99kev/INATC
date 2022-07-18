@@ -20,15 +20,18 @@ def parse_arguments():
         "--neat_config",
         help="Path to NEAT config file.",
         type=str,
-        required=False,
     )
 
     parser.add_argument(
-        "--train", help="Path to training data.", type=str, required=False
+        "--train",
+        help="Path to training data.",
+        type=str,
     )
 
     parser.add_argument(
-        "--test", help="Path to testing data.", type=str, required=False
+        "--test",
+        help="Path to testing data.",
+        type=str,
     )
 
     parser.add_argument(
