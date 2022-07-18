@@ -16,12 +16,20 @@ def parse_arguments():
     parser.add_argument("-c", "--config", help="Path to config file.", type=str)
 
     parser.add_argument(
-        "-nc", "--neat_config", help="Path to NEAT config file.", type=str
+        "-nc",
+        "--neat_config",
+        help="Path to NEAT config file.",
+        type=str,
+        required=False,
     )
 
-    parser.add_argument("--train", help="Path to training data.", type=str)
+    parser.add_argument(
+        "--train", help="Path to training data.", type=str, required=False
+    )
 
-    parser.add_argument("--test", help="Path to testing data.", type=str)
+    parser.add_argument(
+        "--test", help="Path to testing data.", type=str, required=False
+    )
 
     parser.add_argument(
         "-n", "--run_name", help="The name of the current run.", type=str
