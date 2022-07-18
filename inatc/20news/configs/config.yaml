@@ -2,6 +2,7 @@ info:
     type: 20newsgroups
     method: neat
     fitness_function: f1_score
+    model: vanilla
 generations: 100
 wandb:
     project: inatc

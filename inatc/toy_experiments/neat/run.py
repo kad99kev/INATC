@@ -69,6 +69,7 @@ def prepare_data():
         run_name,
         n_generations,
         cfg["info"]["fitness_function"],
+        cfg["info"]["model"],
     )
 
 
@@ -80,10 +81,25 @@ def prepare_data():
 
 def run(data, config_file):
 
-    X_train, X_test, y_train, y_test, run_name, n_generations, fitness_evaluator = data
+    (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        run_name,
+        n_generations,
+        fitness_evaluator,
+        model,
+    ) = data
 
-    neat_model = VanillaNEAT(config_file, fitness_evaluator, run_name)
-    # neat_model = ECOCNEAT(config_file, fitness_evaluator, run_name)
+    if model == "vanilla":
+        neat_model = VanillaNEAT(config_file, fitness_evaluator, run_name)
+    elif model == "ecoc":
+        neat_model = ECOCNEAT(config_file, fitness_evaluator, run_name)
+    else:
+        raise Exception(
+            f"{model} does not exist! Please choose between `vanilla` or `ecoc`."
+        )
 
     # Create logger.
     start_time = time.time()

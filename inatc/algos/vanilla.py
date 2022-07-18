@@ -5,7 +5,7 @@ import multiprocessing
 import numpy as np
 
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, log_loss
 
 from inatc.utils.helpers import sigmoid, label_transform
 
@@ -25,6 +25,8 @@ class VanillaNEAT:
             return f1_score(self.y_train, preds, average="macro", zero_division=0)
         if self.fitness_evaluator == "accuracy_score":
             return accuracy_score(self.y_train, preds)
+        if self.fitness_evaluator == "log_loss":
+            return 1 - log_loss(self.y_train, preds)
 
     def compute_fitness(self, net):
         try:

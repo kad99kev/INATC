@@ -12,9 +12,17 @@ def parse_arguments():
     Creates an argument parser for balanced and unbalanced experiments.
     """
     parser = argparse.ArgumentParser()
+
+    parser.add_argument("-c", "--config", help="Path to config file.", type=str)
+
     parser.add_argument(
-        "-c", "--config", help="Name of the dataset config file.", type=str
+        "-nc", "--neat_config", help="Path to NEAT config file.", type=str
     )
+
+    parser.add_argument("--train", help="Path to training data.", type=str)
+
+    parser.add_argument("--test", help="Path to testing data.", type=str)
+
     parser.add_argument(
         "-n", "--run_name", help="The name of the current run.", type=str
     )
@@ -51,7 +59,7 @@ def read_fake_data(split_size, random_state, **kwargs):
     return X_train, X_test, y_train, y_test
 
 
-def get_embeddings(text, tokenizer, model):
+def get_embeddings(text, tokenizer, model, embedding_layer="pooler_output"):
     """
     Obtains sentence embeddings from BERT.
 
@@ -61,9 +69,9 @@ def get_embeddings(text, tokenizer, model):
         model: BERTModel instance.
     """
 
-    inputs = tokenizer(text, return_tensors="tf", padding=True, truncation=True)
-    outputs = model(**inputs, training=False)
-    return outputs.pooler_output
+    inputs = tokenizer(text, return_tensors="pt", padding="max_length", truncation=True)
+    outputs = model(**inputs)
+    return outputs[embedding_layer]
 
 
 def is_internet():

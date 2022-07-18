@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score, euclidean_distances, f1_score
+from sklearn.metrics import accuracy_score, euclidean_distances, f1_score, log_loss
 
 
 class ECOCNEAT:
@@ -23,6 +23,8 @@ class ECOCNEAT:
             return f1_score(self.y_, preds, average="macro", zero_division=0)
         if self.fitness_evaluator == "accuracy_score":
             return accuracy_score(self.y_, preds)
+        if self.fitness_evaluator == "log_loss":
+            return 1 - log_loss(self.y_, preds)
 
     def compute_fitness(self, net):
         try:
