@@ -12,5 +12,5 @@ dataset:
     weights: [0.7, 0.125, 0.125, 0.025, 0.025]
 generations: 100
 wandb:
-    project: inatc-toy
+    project: inatc-toy-new
     entity: kad99kev

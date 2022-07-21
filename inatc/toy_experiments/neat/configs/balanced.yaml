@@ -11,5 +11,5 @@ dataset:
     n_classes: 5
 generations: 100
 wandb:
-    project: inatc-toy
+    project: inatc-toy-new
     entity: kad99kev

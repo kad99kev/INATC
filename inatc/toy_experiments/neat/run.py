@@ -62,14 +62,17 @@ def prepare_data():
     n_generations = cfg["generations"]
 
     return (
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        run_name,
-        n_generations,
-        cfg["info"]["fitness_function"],
-        cfg["info"]["model"],
+        (
+            X_train,
+            X_test,
+            y_train,
+            y_test,
+            run_name,
+            n_generations,
+            cfg["info"]["fitness_function"],
+            cfg["info"]["model"],
+        ),
+        args.neat_config,
     )
 
 
@@ -182,7 +185,7 @@ if __name__ == "__main__":
     # Determine path to configuration file. This path manipulation is
     # here so that the script will run successfully regardless of the
     # current working directory.
-    data = prepare_data()
+    data, config = prepare_data()
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "configs/config-2")
+    config_path = os.path.join(local_dir, config)
     run(data, config_path)

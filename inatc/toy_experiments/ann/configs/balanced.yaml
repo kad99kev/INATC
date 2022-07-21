@@ -14,5 +14,5 @@ training:
     shuffle: True
     num_workers: 8
 wandb:
-    project: inatc
+    project: inatc-toy-new
     entity: kad99kev
