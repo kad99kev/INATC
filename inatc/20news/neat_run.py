@@ -193,5 +193,5 @@ if __name__ == "__main__":
     # current working directory.
     data, neat_config = prepare_data()
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, neat_config)
+    config_path = os.path.join(local_dir, f"configs/{neat_config}")
     run(data, config_path)
