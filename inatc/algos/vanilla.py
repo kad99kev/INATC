@@ -92,7 +92,7 @@ class VanillaNEAT:
         p.add_reporter(stats)
         p.add_reporter(
             neat.Checkpointer(
-                100, filename_prefix=self.run_name + "run_checkpoints/checkpoint"
+                generation_interval=100, time_interval_seconds=3000, filename_prefix=self.run_name + "run_checkpoints/checkpoint"
             )
         )
 
