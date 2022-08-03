@@ -51,7 +51,7 @@ GAConfig = {
         },
         "layer_config": {
             "output_feature_range": (1, 512),
-            "num_layers_range": (1, 2),
+            "num_layers_range": (1, 5),
             "kernel_size_range": (1, 9),
         },
         "mutation_config": {
@@ -67,16 +67,16 @@ GAConfig = {
         "num_output_classes": 20,
     },
     "training": {
-        "population_size": 1,
-        "num_generations": 1,
+        "population_size": 150,
+        "num_generations": 10,
         "checkpoint_interval": 2,
         "batch_size": 32,
-        "epochs": 1,
+        "epochs": 10,
         "shuffle": True,
         "num_workers": 8,
         "validation_split": 0.2,
-        "seed": 0,
         "fitness_function": "f1_score",
+        "method": "GA",
     },
-    "wandb": {"project": "inatc-toy", "entity": "kad99kev"},
+    "wandb": {"project": "inatc", "entity": "kad99kev"},
 }

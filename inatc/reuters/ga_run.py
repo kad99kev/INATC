@@ -84,6 +84,7 @@ def run(data, config_data):
             "num_input_channels": evolution_config["num_input_channels"],
             "num_input_features": evolution_config["num_input_features"],
             "num_output_classes": evolution_config["num_output_classes"],
+            "seed": seed,
         },
         mode="online" if is_internet() else "offline",
         settings=wandb.Settings(start_method="fork"),

@@ -36,6 +36,7 @@ class Population:
             best_genome: Best genome observed throughout training.
             base_path: Base path for checkpoint saving.
             fitness_evaluator: Fitness function to be used.
+            seed: Random seed to be used.
         """
         self.training_config = config["training"]
         self.evolution_config = config["evolution"]
@@ -43,6 +44,7 @@ class Population:
         self.multi_class = multi_class
         self.base_path = save_path
         self.best_genome = None
+        self.seed = seed
 
         # Set seed.
         random.seed(seed)
@@ -172,7 +174,7 @@ class Population:
             X_train,
             y_train,
             test_size=self.training_config["validation_split"],
-            random_state=self.training_config["seed"],
+            random_state=self.seed,
         )
         X_test, y_test = test_data
 
