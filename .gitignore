@@ -139,3 +139,6 @@ runs/
 
 # Ignore datasets.
 data/
+
+# Ignore lightning logs
+lightning_logs/

@@ -1,6 +1,9 @@
 import argparse
 import yaml
 import urllib
+import torch
+import multiprocessing
+
 import numpy as np
 
 from sklearn.datasets import make_classification
@@ -120,3 +123,19 @@ def label_transform(inputs, threshold=0.5):
     input_arr[input_arr > threshold] = 1
     input_arr[input_arr != 1] = 0
     return list(input_arr)
+
+
+def get_accelerator():
+    """
+    Returns accelerator and devices based on availability.
+    """
+    if torch.cuda.is_available():
+        accelerator = "gpu"
+        devices = list(range(torch.cuda.device_count()))
+    elif torch.backends.mps.is_available():
+        accelerator = "mps"
+        devices = 1
+    else:
+        accelerator = "cpu"
+        devices = None
+    return accelerator, devices
