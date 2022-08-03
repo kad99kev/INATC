@@ -10,6 +10,11 @@ def load_requirements():
         if line:
             requirements.append(line)
 
+    # For latest neat-python code.
+    requirements = requirements + [
+        "neat-python @ git+https://github.com/CodeReclaimers/neat-python.git"
+    ]
+    print(requirements)
     return requirements
 
 
