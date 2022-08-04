@@ -114,9 +114,9 @@ class Genome(pl.LightningModule):
         """
         if self.multi_class:
             _, preds = torch.max(preds.data, 1)
-            return preds.numpy()
+            return preds.cpu().numpy()
         else:
-            preds = preds.numpy()
+            preds = preds.cpu().numpy()
             preds[preds > 0.5] = 1
             preds[preds != 1] = 0
             return preds

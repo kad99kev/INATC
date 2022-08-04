@@ -11,7 +11,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
-from pytorch_lightning.strategies import DDPStrategy
+from pytorch_lightning.strategies import DDPSpawnStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from tqdm import tqdm
@@ -132,13 +132,13 @@ class Population:
         pin_memory = False
         if self.accelerator == "gpu":
             pin_memory = True
-        num_workers = multiprocessing.cpu_count()
 
         return DataLoader(
             dataset,
             self.training_config["batch_size"],
             shuffle=shuffle,
-            num_workers=num_workers,
+            num_workers=self.training_config["num_workers"],
+            persistent_workers=True,
             pin_memory=pin_memory,
         )
 
@@ -207,7 +207,7 @@ class Population:
         # Get strategy based on available machines.
         strategy = None
         if accelerator == "gpu":
-            strategy = DDPStrategy(find_unused_parameters=False)
+            strategy = DDPSpawnStrategy(find_unused_parameters=False)
 
         # Populate initial population.
         self._populate()
@@ -244,13 +244,11 @@ class Population:
                 trainer = Trainer(
                     default_root_dir=f"{self.base_path}logs/{gen}/",
                     max_epochs=self.training_config["epochs"],
-                    log_every_n_steps=len(train_dl)
-                    / self.training_config["batch_size"],
+                    log_every_n_steps=len(train_dl),
                     callbacks=callbacks,
                     enable_checkpointing=checkpointing,
                     accelerator=accelerator,
                     strategy=strategy,
-                    pin_memory=pin_memory,
                     devices=devices,
                 )
                 # Train model.
