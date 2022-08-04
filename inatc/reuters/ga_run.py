@@ -24,13 +24,13 @@ def prepare_data():
     args = parse_arguments()
 
     # Create experiment directories based on the type of experiment.
-    run_name = "runs/" + f"{args.run_name}_{args.seed}" + "/"
-    if os.path.isdir(run_name):
+    run_path = "runs/" + f"{args.run_name}_{args.seed}" + "/"
+    if os.path.isdir(run_path):
         raise FileExistsError(
             "A previous run state already exists! Please rename the previous run or delete the folder."
         )
     else:
-        os.mkdir(run_name)
+        os.mkdir(run_path)
 
     # Load dataset
     print("Reading data...")
@@ -55,7 +55,17 @@ def prepare_data():
     accelerator, devices = get_accelerator()
     print(f"Using {accelerator} accelerator with {devices} device(s)")
 
-    return (X_train, X_test, y_train, y_test, args.seed, accelerator, devices, run_name)
+    return (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        args.seed,
+        accelerator,
+        devices,
+        f"{args.run_name}_{args.seed}",
+        run_path,
+    )
 
 
 def run(data, config_data):
@@ -69,6 +79,7 @@ def run(data, config_data):
         accelerator,
         devices,
         run_name,
+        run_path,
     ) = data
 
     # Initialising wandb.
@@ -76,6 +87,7 @@ def run(data, config_data):
     evolution_config = config_data["evolution"]
     wandb.init(
         **wandb_config if wandb_config is not None else wandb_config,
+        name=run_name,
         config={
             **config_data["training"],
             **evolution_config["mutation_config"],
@@ -93,7 +105,7 @@ def run(data, config_data):
     # Create logger.
     start_time = time.time()
     logging.basicConfig(
-        filename=run_name + "run.log",
+        filename=run_path + "run.log",
         filemode="a",
         format="%(asctime)s.%(msecs)d: %(levelname)s - %(message)s",
         datefmt="%H:%M:%S",
@@ -102,7 +114,7 @@ def run(data, config_data):
 
     logging.info("Starting training.")
 
-    ga_model = Population(config_data, seed, save_path=run_name, multi_class=False)
+    ga_model = Population(config_data, seed, save_path=run_path, multi_class=False)
     best_model = ga_model.run(
         (X_train, y_train),
         (X_test, y_test),
@@ -125,7 +137,7 @@ def run(data, config_data):
         y_train, train_preds, output_dict=True, zero_division=0
     )
     df = pd.DataFrame(report).transpose()
-    df.to_csv(run_name + "train_results.csv")
+    df.to_csv(run_path + "train_results.csv")
 
     # Evaluate on testing data.
     logging.info("Running testing evaluation...")
@@ -134,7 +146,7 @@ def run(data, config_data):
         y_test, test_preds, output_dict=True, zero_division=0
     )
     df = pd.DataFrame(report).transpose()
-    df.to_csv(run_name + "test_results.csv")
+    df.to_csv(run_path + "test_results.csv")
 
     # Finish evaluation.
     logging.info(

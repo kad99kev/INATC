@@ -10,6 +10,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
+from pytorch_lightning.strategies import DDPStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from tqdm import tqdm
@@ -37,6 +38,7 @@ class Population:
             base_path: Base path for checkpoint saving.
             fitness_evaluator: Fitness function to be used.
             seed: Random seed to be used.
+            accelerator: Accelerator device being used.
         """
         self.training_config = config["training"]
         self.evolution_config = config["evolution"]
@@ -124,11 +126,17 @@ class Population:
                 torch.Tensor(X),
                 torch.LongTensor(y) if self.multi_class else torch.FloatTensor(y),
             )
+
+        pin_memory = False
+        if self.accelerator == "gpu":
+            pin_memory = True
+
         return DataLoader(
             dataset,
             self.training_config["batch_size"],
             shuffle=shuffle,
             num_workers=self.training_config["num_workers"],
+            pin_memory=pin_memory,
         )
 
     def _save_best_genome(self, best_genome, best_trainer):
@@ -168,6 +176,9 @@ class Population:
             devices: Number of accelerator devices for PyTorch Lightning.
         """
 
+        # Get accelerator.
+        self.accelerator = accelerator
+
         # Prepare data.
         X_train, y_train = train_data
         X_train, X_valid, y_train, y_valid = train_test_split(
@@ -189,6 +200,11 @@ class Population:
 
         # Validation DataLoader.
         valid_dl = self._prepare_dataloader(X_valid, y_valid)
+
+        # Get strategy based on available machines.
+        strategy = None
+        if accelerator == "gpu":
+            strategy = DDPStrategy(find_unused_parameters=False)
 
         # Populate initial population.
         self._populate()
@@ -230,6 +246,8 @@ class Population:
                     callbacks=callbacks,
                     enable_checkpointing=checkpointing,
                     accelerator=accelerator,
+                    strategy=strategy,
+                    pin_memory=pin_memory,
                     devices=devices,
                 )
                 # Train model.
