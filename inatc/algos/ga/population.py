@@ -250,7 +250,6 @@ class Population:
                     enable_checkpointing=checkpointing,
                     accelerator=accelerator,
                     strategy=strategy,
-                    pin_memory=pin_memory,
                     devices=devices,
                 )
                 # Train model.
