@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import gzip
 import wandb
@@ -127,15 +128,17 @@ class Population:
                 torch.LongTensor(y) if self.multi_class else torch.FloatTensor(y),
             )
 
+        # Dataloader info.
         pin_memory = False
         if self.accelerator == "gpu":
             pin_memory = True
+        num_workers = multiprocessing.cpu_count()
 
         return DataLoader(
             dataset,
             self.training_config["batch_size"],
             shuffle=shuffle,
-            num_workers=self.training_config["num_workers"],
+            num_workers=num_workers,
             pin_memory=pin_memory,
         )
 

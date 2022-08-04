@@ -73,7 +73,6 @@ GAConfig = {
         "batch_size": 32,
         "epochs": 10,
         "shuffle": True,
-        "num_workers": 8,
         "validation_split": 0.2,
         "seed": 0,
         "fitness_function": "f1_score",
