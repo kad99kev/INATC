@@ -20,15 +20,21 @@ from sklearn.model_selection import train_test_split
 
 from .genome import Genome
 
+import warnings
+
+warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
 
 class Population:
-    def __init__(self, config, seed, save_path=".", multi_class=False):
+    def __init__(self, config, seed, accelerator=None, devices=None, save_path=".", multi_class=False):
         """
         The Population class.
         A population will have multiple Genomes as individuals.
 
         Arguments:
             config: A dictionary containing configuration information.
+            seed: Random seed to be used.
+            accelerator: Device accelerator for PyTorch Lightning.
+            devices: Number of accelerator devices for PyTorch Lightning.
             save_path: Base path for creating checkpoints.
             multi_class: If the genome is being built for a multi-class task.
 
@@ -38,12 +44,12 @@ class Population:
             best_genome: Best genome observed throughout training.
             base_path: Base path for checkpoint saving.
             fitness_evaluator: Fitness function to be used.
-            seed: Random seed to be used.
-            accelerator: Accelerator device being used.
         """
         self.training_config = config["training"]
         self.evolution_config = config["evolution"]
         self.fitness_evaluator = self.training_config["fitness_function"]
+        self.accelerator = accelerator
+        self.devices = devices
         self.multi_class = multi_class
         self.base_path = save_path
         self.best_genome = None
@@ -168,19 +174,14 @@ class Population:
             data = pickle.load(f)
         return data
 
-    def run(self, train_data, test_data, accelerator=None, devices=None):
+    def run(self, train_data, test_data):
         """
         Start training.
 
         Arguments:
             train_data: Training data.
             test_data: Testing data.
-            accelerator: Device accelerator for PyTorch Lightning.
-            devices: Number of accelerator devices for PyTorch Lightning.
         """
-
-        # Get accelerator.
-        self.accelerator = accelerator
 
         # Prepare data.
         X_train, y_train = train_data
@@ -207,6 +208,7 @@ class Population:
         # Get strategy based on available machines.
         strategy = None
         if accelerator == "gpu":
+            # No other DDP strategy works for PyTorch Lightning when using GPU.
             strategy = DDPSpawnStrategy(find_unused_parameters=False)
 
         # Populate initial population.
@@ -244,18 +246,18 @@ class Population:
                 trainer = Trainer(
                     default_root_dir=f"{self.base_path}logs/{gen}/",
                     max_epochs=self.training_config["epochs"],
-                    log_every_n_steps=len(train_dl),
                     callbacks=callbacks,
                     enable_checkpointing=checkpointing,
-                    accelerator=accelerator,
+                    accelerator=self.accelerator,
                     strategy=strategy,
-                    devices=devices,
+                    devices=self.devices,
                 )
                 # Train model.
                 trainer.fit(genome, train_dl, valid_dl)
 
                 # Perform evaluation.
-                test_preds = self.predict(X_test, genome, trainer=trainer)
+                print("Performing evaluation...")
+                test_preds = self.predict(X_test, genome)
                 score = self._compute_fitness(y_test, test_preds)
                 genome.fitness = score
                 print("Fitness: ", genome.fitness)
@@ -290,7 +292,7 @@ class Population:
 
         return self.best_genome
 
-    def predict(self, X, genome=None, trainer=None, accelerator=None, devices=None):
+    def predict(self, X, genome=None):
         """
         Run predictions for given data.
 
@@ -313,7 +315,11 @@ class Population:
             )
             genome = self.best_genome
         dl = self._prepare_dataloader(X, predict=True)
-        if trainer is None:
-            trainer = Trainer(accelerator=accelerator, devices=devices)
+        
+        devices = None
+        if self.accelerator == "gpu" or self.accelerator == "mps":
+            # Only use one device for predictions.
+            devices = 1
+        trainer = Trainer(accelerator=self.accelerator, devices=devices)
         preds = np.concatenate(trainer.predict(genome, dataloaders=dl), axis=0)
         return preds
