@@ -66,6 +66,8 @@ class Population:
         self.best_genome = None
         self.seed = seed
 
+        print(f"Using {accelerator} accelerator with {devices} device(s)")
+
         # Set seed.
         random.seed(seed)
         pl.seed_everything(seed)
