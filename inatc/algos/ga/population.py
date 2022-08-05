@@ -22,10 +22,21 @@ from .genome import Genome
 
 import warnings
 
-warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
+warnings.filterwarnings(
+    "ignore", ".*Consider increasing the value of the `num_workers` argument*"
+)
+
 
 class Population:
-    def __init__(self, config, seed, accelerator=None, devices=None, save_path=".", multi_class=False):
+    def __init__(
+        self,
+        config,
+        seed,
+        accelerator=None,
+        devices=None,
+        save_path=".",
+        multi_class=False,
+    ):
         """
         The Population class.
         A population will have multiple Genomes as individuals.
@@ -244,7 +255,6 @@ class Population:
 
                 # Initialise trainer.
                 trainer = Trainer(
-                    default_root_dir=f"{self.base_path}logs/{gen}/",
                     max_epochs=self.training_config["epochs"],
                     callbacks=callbacks,
                     enable_checkpointing=checkpointing,
@@ -315,7 +325,7 @@ class Population:
             )
             genome = self.best_genome
         dl = self._prepare_dataloader(X, predict=True)
-        
+
         devices = None
         if self.accelerator == "gpu" or self.accelerator == "mps":
             # Only use one device for predictions.
