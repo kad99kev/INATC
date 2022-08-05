@@ -207,7 +207,7 @@ class Population:
 
         # Get strategy based on available machines.
         strategy = None
-        if accelerator == "gpu":
+        if self.accelerator == "gpu":
             # No other DDP strategy works for PyTorch Lightning when using GPU.
             strategy = DDPSpawnStrategy(find_unused_parameters=False)
 
