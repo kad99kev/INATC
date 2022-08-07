@@ -14,7 +14,6 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.strategies import DDPSpawnStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
-from tqdm import tqdm
 from sklearn.metrics import f1_score, accuracy_score, log_loss
 from sklearn.model_selection import train_test_split
 
@@ -92,7 +91,7 @@ class Population:
         Used to create the initial population.
         """
         population = []
-        for _ in tqdm(range(self.training_config["population_size"])):
+        for _ in range(self.training_config["population_size"]):
             genome = Genome(self.evolution_config, multi_class=self.multi_class)
             genome.create_genes()
             population.append(genome)
@@ -218,11 +217,6 @@ class Population:
         # Validation DataLoader.
         valid_dl = self._prepare_dataloader(X_valid, y_valid)
 
-        # Get strategy based on available machines.
-        strategy = None
-        if self.accelerator == "gpu":
-            # No other DDP strategy works for PyTorch Lightning when using GPU.
-            strategy = DDPSpawnStrategy(find_unused_parameters=False)
 
         # Populate initial population.
         self._populate()
@@ -251,7 +245,7 @@ class Population:
                     callbacks.append(checkpoint_callback)
 
                 earlystopping_callback = EarlyStopping(
-                    monitor="val_loss", min_delta=0.00, patience=3, mode="min"
+                    monitor="val_loss", min_delta=0.00, patience=3, mode="min", verbose=True
                 )
                 callbacks.append(earlystopping_callback)
 
@@ -261,7 +255,6 @@ class Population:
                     callbacks=callbacks,
                     enable_checkpointing=checkpointing,
                     accelerator=self.accelerator,
-                    strategy=strategy,
                     devices=self.devices,
                 )
                 # Train model.
@@ -292,7 +285,7 @@ class Population:
 
             # Perform reproduction
             new_population = []
-            for _ in tqdm(range(len(self.population))):
+            for _ in range(len(self.population)):
                 p_1, p_2 = random.choices(
                     self.population, weights=[g.fitness for g in self.population], k=2
                 )
@@ -328,10 +321,6 @@ class Population:
             genome = self.best_genome
         dl = self._prepare_dataloader(X, predict=True)
 
-        devices = None
-        if self.accelerator == "gpu" or self.accelerator == "mps":
-            # Only use one device for predictions.
-            devices = 1
-        trainer = Trainer(accelerator=self.accelerator, devices=devices)
+        trainer = Trainer(accelerator=self.accelerator, devices=self.devices)
         preds = np.concatenate(trainer.predict(genome, dataloaders=dl), axis=0)
         return preds

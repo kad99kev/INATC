@@ -46,7 +46,6 @@ def prepare_data():
 
     # Print accelerator and devices.
     accelerator, devices = get_accelerator()
-    print(f"Using {accelerator} accelerator with {devices} device(s)")
 
     return (
         X_train,
@@ -107,7 +106,7 @@ def run(data, config_data):
 
     logging.info("Starting training.")
 
-    ga_model = Population(config_data, seed, save_path=run_path, multi_class=True)
+    ga_model = Population(config_data, seed, accelerator, devices, save_path=run_path, multi_class=True)
     best_model = ga_model.run(
         (X_train, y_train),
         (X_test, y_test)

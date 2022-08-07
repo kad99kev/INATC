@@ -69,10 +69,10 @@ GAConfig = {
     "training": {
         "population_size": 2,
         "num_generations": 2,
-        "checkpoint_interval": 2,
+        "checkpoint_interval": 1,
         "batch_size": 64,
         "epochs": 10,
-        "num_workers": 80,
+        "num_workers": 3,
         "shuffle": True,
         "validation_split": 0.2,
         "fitness_function": "f1_score",

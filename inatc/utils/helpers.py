@@ -131,11 +131,9 @@ def get_accelerator():
     """
     if torch.cuda.is_available():
         accelerator = "gpu"
-        devices = list(range(torch.cuda.device_count()))
     elif torch.backends.mps.is_available():
         accelerator = "mps"
-        devices = 1
     else:
         accelerator = "cpu"
-        devices = None
-    return accelerator, devices
+    # Always return devices as 1 since distributed computing does not work.
+    return accelerator, 1
