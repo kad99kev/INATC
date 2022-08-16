@@ -156,7 +156,7 @@ class Population:
             self.training_config["batch_size"],
             shuffle=shuffle,
             num_workers=self.training_config["num_workers"],
-            persistent_workers=True,
+            # persistent_workers=True,
             pin_memory=pin_memory,
         )
 
@@ -186,28 +186,25 @@ class Population:
             data = pickle.load(f)
         return data
 
-    def run(self, train_data, test_data):
+    def run(self, X_train, y_train):
         """
         Start training.
 
         Arguments:
-            train_data: Training data.
-            test_data: Testing data.
+            X_train: Training input features.
+            y_train: Training output targets.
         """
 
         # Prepare data.
-        X_train, y_train = train_data
         X_train, X_valid, y_train, y_valid = train_test_split(
             X_train,
             y_train,
             test_size=self.training_config["validation_split"],
             random_state=self.seed,
         )
-        X_test, y_test = test_data
 
         print(f"Training data size - {len(X_train)}")
         print(f"Validation data size - {len(X_valid)}")
-        print(f"Testing data size - {len(X_test)}")
 
         # Training DataLoader.
         train_dl = self._prepare_dataloader(
@@ -245,7 +242,7 @@ class Population:
                     callbacks.append(checkpoint_callback)
 
                 earlystopping_callback = EarlyStopping(
-                    monitor="val_loss", min_delta=0.00, patience=3, mode="min", verbose=True
+                    monitor="val_loss", min_delta=0.00, patience=3, mode="min"
                 )
                 callbacks.append(earlystopping_callback)
 
@@ -262,8 +259,8 @@ class Population:
 
                 # Perform evaluation.
                 print("Performing evaluation...")
-                test_preds = self.predict(X_test, genome)
-                score = self._compute_fitness(y_test, test_preds)
+                test_preds = self.predict(X_valid, genome)
+                score = self._compute_fitness(y_valid, test_preds)
                 genome.fitness = score
                 print("Fitness: ", genome.fitness)
                 fitnesses.append(genome.fitness)
@@ -305,10 +302,6 @@ class Population:
             X: Input data.
             genome: If provided, it will run prediction using given genome. \
                 Else it will use best genome.
-            trainer: If provided, it will use the given trainer. \
-                Else it will create a new one.
-            accelerator: Device accelerator for PyTorch Lightning.
-            devices: Number of accelerator devices for PyTorch Lightning.
         """
         if genome is None and not hasattr(self, "best_genome"):
             raise RuntimeError(

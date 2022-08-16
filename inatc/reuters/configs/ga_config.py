@@ -51,7 +51,7 @@ GAConfig = {
         },
         "layer_config": {
             "output_feature_range": (1, 512),
-            "num_layers_range": (1, 2),
+            "num_layers_range": (1, 5),
             "kernel_size_range": (1, 9),
         },
         "mutation_config": {
@@ -69,13 +69,16 @@ GAConfig = {
     "training": {
         "population_size": 150,
         "num_generations": 10,
-        "checkpoint_interval": 2,
-        "batch_size": 32,
+        "checkpoint_interval": 10,
+        "batch_size": 64,
         "epochs": 10,
+        "num_workers": 0,
         "shuffle": True,
         "validation_split": 0.2,
         "seed": 0,
         "fitness_function": "f1_score",
+        "method": "GA",
+        "type": "reuters-21578"
     },
     "wandb": {"project": "inatc-toy", "entity": "kad99kev"},
 }

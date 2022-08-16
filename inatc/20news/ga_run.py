@@ -108,8 +108,7 @@ def run(data, config_data):
 
     ga_model = Population(config_data, seed, accelerator, devices, save_path=run_path, multi_class=True)
     best_model = ga_model.run(
-        (X_train, y_train),
-        (X_test, y_test)
+        X_train, y_train
     )
 
     # Finish training.

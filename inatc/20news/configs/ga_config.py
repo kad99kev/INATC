@@ -67,16 +67,17 @@ GAConfig = {
         "num_output_classes": 20,
     },
     "training": {
-        "population_size": 2,
-        "num_generations": 2,
-        "checkpoint_interval": 1,
+        "population_size": 150,
+        "num_generations": 10,
+        "checkpoint_interval": 10,
         "batch_size": 64,
         "epochs": 10,
-        "num_workers": 3,
+        "num_workers": 0,
         "shuffle": True,
         "validation_split": 0.2,
         "fitness_function": "f1_score",
         "method": "GA",
+        "type": "20newsgroups"
     },
-    "wandb": {"project": "inatc-toy", "entity": "kad99kev"},
+    "wandb": {"project": "inatc", "entity": "kad99kev"},
 }

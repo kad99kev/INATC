@@ -34,12 +34,12 @@ def prepare_data():
 
     # Load dataset
     print("Reading data...")
-    X_train = np.load("/Users/kad99kev/Desktop/INATC-Data/reuters/train_hidden.npy")
+    X_train = np.load(args.train)
     y_train = [
         reuters.categories(f_id) for f_id in reuters.fileids() if "train" in f_id
     ]
 
-    X_test = np.load("/Users/kad99kev/Desktop/INATC-Data/reuters/test_hidden.npy")
+    X_test = np.load(args.test)
     y_test = [reuters.categories(f_id) for f_id in reuters.fileids() if "test" in f_id]
     print("Finished reading!")
 
@@ -53,7 +53,6 @@ def prepare_data():
 
     # Print accelerator and devices.
     accelerator, devices = get_accelerator()
-    print(f"Using {accelerator} accelerator with {devices} device(s)")
 
     return (
         X_train,
@@ -114,10 +113,9 @@ def run(data, config_data):
 
     logging.info("Starting training.")
 
-    ga_model = Population(config_data, seed, save_path=run_path, multi_class=False)
+    ga_model = Population(config_data, seed, accelerator, devices, save_path=run_path, multi_class=False)
     best_model = ga_model.run(
-        (X_train, y_train),
-        (X_test, y_test)
+        X_train, y_train
     )
 
     # Finish training.
