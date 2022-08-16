@@ -113,10 +113,10 @@ def run(data, config_data):
 
     logging.info("Starting training.")
 
-    ga_model = Population(config_data, seed, accelerator, devices, save_path=run_path, multi_class=False)
-    best_model = ga_model.run(
-        X_train, y_train
+    ga_model = Population(
+        config_data, seed, accelerator, devices, save_path=run_path, multi_class=False
     )
+    best_model = ga_model.run(X_train, y_train)
 
     # Finish training.
     logging.info(f"Training done! Time taken - {time.time() - start_time:.3f} seconds")
