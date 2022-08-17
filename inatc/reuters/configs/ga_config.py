@@ -80,5 +80,5 @@ GAConfig = {
         "method": "GA",
         "type": "reuters-21578"
     },
-    "wandb": {"project": "inatc-toy", "entity": "kad99kev"},
+    "wandb": {"project": "inatc", "entity": "kad99kev"},
 }
