@@ -214,7 +214,6 @@ class Population:
         # Validation DataLoader.
         valid_dl = self._prepare_dataloader(X_valid, y_valid)
 
-
         # Populate initial population.
         self._populate()
 

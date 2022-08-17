@@ -78,7 +78,7 @@ GAConfig = {
         "seed": 0,
         "fitness_function": "f1_score",
         "method": "GA",
-        "type": "reuters-21578"
+        "type": "reuters-21578",
     },
     "wandb": {"project": "inatc", "entity": "kad99kev"},
 }

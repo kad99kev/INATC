@@ -77,7 +77,7 @@ GAConfig = {
         "validation_split": 0.2,
         "fitness_function": "f1_score",
         "method": "GA",
-        "type": "20newsgroups"
+        "type": "20newsgroups",
     },
     "wandb": {"project": "inatc", "entity": "kad99kev"},
 }
