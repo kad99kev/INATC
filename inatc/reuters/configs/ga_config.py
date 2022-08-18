@@ -49,6 +49,13 @@ GAConfig = {
             "batch_norm": nn.BatchNorm1d,
             "instance_norm": nn.InstanceNorm1d,
         },
+        "activation_set": {
+            "relu": nn.ReLU,
+            "tanh": nn.Tanh,
+            "sigmoid": nn.Sigmoid,
+            "leaky_relu": nn.LeakyReLU,
+            "softplus": nn.Softplus,
+        },
         "layer_config": {
             "output_feature_range": (1, 512),
             "num_layers_range": (1, 5),

@@ -39,6 +39,7 @@ class Genome(pl.LightningModule):
         self.num_features = config["num_input_features"]
         self.num_classes = config["num_output_classes"]
         self.layer_set = config["layer_set"]
+        self.activation_set = config["activation_set"]
         self.layer_config = config["layer_config"]
         self.mutation_config = config["mutation_config"]
         self.multi_class = multi_class
@@ -88,9 +89,16 @@ class Genome(pl.LightningModule):
             if num_features <= 1 and gene[0] != "linear":
                 continue
 
-            # type, num_out, kernel
+            # type, activation, num_out, kernel
             g = Gene(
-                gene[0], num_features, num_channels, gene[1], gene[2], self.layer_set
+                gene[0],
+                gene[1],
+                num_features,
+                num_channels,
+                gene[2],
+                gene[3],
+                self.layer_set,
+                self.activation_set,
             )
             check_channels, check_features = g.calculate_output_shape()
 
@@ -178,11 +186,14 @@ class Genome(pl.LightningModule):
         genes_list = []
         for i in range(max_num):
             layer_type = random.choice(list(self.layer_set.keys()))
+            activation_type = random.choice(list(self.activation_set.keys()))
             layer_num_outputs = random.randint(
                 *self.layer_config["output_feature_range"]
             )
             layer_kernel_size = random.randint(*self.layer_config["kernel_size_range"])
-            genes_list.append([layer_type, layer_num_outputs, layer_kernel_size])
+            genes_list.append(
+                [layer_type, activation_type, layer_num_outputs, layer_kernel_size]
+            )
 
         self._process_genes_list(self.num_channels, self.num_features, genes_list)
 

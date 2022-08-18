@@ -7,11 +7,13 @@ class Gene(nn.Module):
     def __init__(
         self,
         layer_type,
+        activation_type,
         num_input_features,
         num_channels,
         num_output_features,
         kernel_size,
         layer_set,
+        activation_set,
     ):
         """
         The Gene class.
@@ -19,6 +21,7 @@ class Gene(nn.Module):
 
         Arguments:
             layer_type: Type of layer.
+            layer_type: Type of activation.
             num_input_features: Number of features expected from input.
             num_channels: Number of channels expected from input.
             num_output_features: Number of features given from output.
@@ -26,18 +29,20 @@ class Gene(nn.Module):
 
         Attributes:
             layer: PyTorch equivalent of layer_type.
+            activation: If it is a Linear, CNN or LSTM layer, it will have this attribute.
 
 
         """
         super().__init__()
         self.layer_type = layer_type
+        self.activation_type = activation_type
         self.num_input_features = num_input_features
         self.num_channels = num_channels
         self.num_output_features = num_output_features
         self.kernel_size = kernel_size
-        self._build_layer(layer_set)
+        self._build_layer(layer_set, activation_set)
 
-    def _build_layer(self, layer_set):
+    def _build_layer(self, layer_set, activation_set):
         """
         Build current gene as a PyTorch layer.
 
@@ -48,14 +53,17 @@ class Gene(nn.Module):
             self.layer = layer_set[self.layer_type](
                 self.num_input_features, self.num_output_features
             )
+            self.activation = activation_set[self.activation_type]()
         elif self.layer_type in ["lstm", "gru"]:
             self.layer = layer_set[self.layer_type](
                 self.num_input_features, self.num_output_features, batch_first=True
             )
+            self.activation = activation_set[self.activation_type]()
         elif self.layer_type == "conv":
             self.layer = layer_set[self.layer_type](
                 self.num_channels, self.num_output_features, self.kernel_size
             )
+            self.activation = activation_set[self.activation_type]()
         elif "pool" in self.layer_type:
             self.layer = layer_set[self.layer_type](self.kernel_size)
         elif "norm" in self.layer_type:
@@ -110,4 +118,10 @@ class Gene(nn.Module):
         if self.layer_type in ["lstm", "gru"]:
             out, _ = self.layer(x)
             return out
-        return self.layer(x)
+        else:
+            out = self.layer(x)
+
+        if hasattr(self, "activation"):
+            out = self.activation(out)
+
+        return out
