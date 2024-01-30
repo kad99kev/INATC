@@ -2,6 +2,10 @@
 
 ## Investigating a Neuro-evolutionary Approach to Text Classification
 
+Initially written for my Master's thesis at the University of Galway.
+
+Research derived from this work - https://www.sciencedirect.com/science/article/pii/S187705092301284X
+
 ### How to run?
 To run an experiment:
 
